@@ -55,6 +55,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Converts a blender scene into an ardor3d node list (one node per scene)
+ * @author pgi
+ */
 public class BlenderImporter {
     
     private ResourceSource modelSource;
@@ -66,14 +70,19 @@ public class BlenderImporter {
     public BlenderImporter() {
     }
 
-    protected ResourceSource getModelSource() {
+    private ResourceSource getModelSource() {
         return modelSource;
     }
 
-    protected ResourceSource getTextureSource() {
+    private ResourceSource getTextureSource() {
         return textureSource == null ? getModelSource() : textureSource;
     }
 
+    /**
+     * Load a blender scene from the given resource.
+     * @param resource the .blend resource
+     * @return a list of nodes (one node per scene) wrapped into a BlenderStorage
+     */
     public BlenderStorage load(ResourceSource resource) {
         this.modelSource = resource;
         InputStream stream = null;
@@ -101,7 +110,12 @@ public class BlenderImporter {
         return new BlenderStorage(sceneNodes);
     }
 
-    protected Node blenderSceneToArdor3dNode(BlenderScene blenderScene) {
+    /**
+     * Called once for each blender scene in the load method: parses the scene into an Ardor3D node
+     * @param blenderScene the scene to parse
+     * @return the node with the parsed scene
+     */
+    private Node blenderSceneToArdor3dNode(BlenderScene blenderScene) {
         Node sceneNode = new Node(blenderScene.getName());
         List<BlenderSceneLayer> layers = blenderScene.getLayers();
         for (BlenderSceneLayer blenderSceneLayer : layers) {
@@ -115,7 +129,12 @@ public class BlenderImporter {
         return sceneNode;
     }
 
-    protected Node blenderSceneLayerToArdor3dNode(BlenderSceneLayer blenderSceneLayer) {
+    /**
+     * Called during the conversion of a blender scene, transforms a layer into a node
+     * @param blenderSceneLayer the layer to transform
+     * @return the node with the layer contents
+     */
+    private Node blenderSceneLayerToArdor3dNode(BlenderSceneLayer blenderSceneLayer) {
         Node layerNode = new Node("Layer " + blenderSceneLayer.getIndex());
         List<BlenderObject> blenderObjectsInLayer = blenderSceneLayer.getBlenderObjects();
         for (BlenderObject blenderObject : blenderObjectsInLayer) {
@@ -124,6 +143,12 @@ public class BlenderImporter {
         return layerNode;
     }
 
+    /**
+     * Parses elements contained in a blender layer. Transforms a blender object into an ardor3d entity and
+     * add it (if possible) to the node that represents the blender layer.
+     * @param blenderObject the blender object to transform
+     * @param layerNode the layer node where to add the transformed object
+     */
     private void parseBlenderObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
         switch(blenderObject.getType()) {
             case LAMP:
@@ -137,21 +162,27 @@ public class BlenderImporter {
         }
     }
 
+    /**
+     * Parses a lamp object into a light and adds it to the layerNode
+     * @param blenderObject the blender object that contains the light to transform
+     * @param layerNode the layer node
+     */
     private void parseLampObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
-        MathTypeConversions conversions = new MathTypeConversions();
         List<BlenderLamp> lampList = blenderObject.getObjectData(BlenderLamp.class);
         for (BlenderLamp blenderLamp : lampList) {
             LampType type = blenderLamp.getType();
             if(type == LampType.LOCAL) {
                 PointLight light = new PointLight();
                 light.setName(blenderLamp.getName());
-                light.setLocation(conversions.Vector3(blenderObject.getLocation()));
-                light.setAmbient(conversions.ColorRGBA(blenderLamp.getRgb()));
-                light.setDiffuse(conversions.ColorRGBA(blenderLamp.getRgb()));
+                light.setLocation(MathTypeConversions.Vector3(blenderObject.getLocation()));
+                light.setAmbient(MathTypeConversions.ColorRGBA(blenderLamp.getRgb()));
+                light.setDiffuse(MathTypeConversions.ColorRGBA(blenderLamp.getRgb()));
                 light.setEnabled(true);
 
                 LightState lightState = (LightState) layerNode.getLocalRenderState(RenderState.StateType.Light);
-                if(lightState == null) layerNode.setRenderState(lightState = new LightState());
+                if(lightState == null) {//add the light state if missing (in case of multiple lights)
+                    layerNode.setRenderState(lightState = new LightState());
+                }
                 lightState.setEnabled(true);
                 lightState.attach(light);
             } else {
@@ -161,12 +192,11 @@ public class BlenderImporter {
     }
 
     private void parseMeshObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
-        MathTypeConversions conversions = new MathTypeConversions();
         Node blenderObjectNode = new Node(blenderObject.getName());
 
-        blenderObjectNode.setTranslation(conversions.Vector3(blenderObject.getLocation()));
-        blenderObjectNode.setScale(conversions.Vector3(blenderObject.getScale()));
-        blenderObjectNode.setRotation(conversions.Quaternion(blenderObject.getRotation()));
+        blenderObjectNode.setTranslation(MathTypeConversions.Vector3(blenderObject.getLocation()));
+        blenderObjectNode.setScale(MathTypeConversions.Vector3(blenderObject.getScale()));
+        blenderObjectNode.setRotation(MathTypeConversions.Quaternion(blenderObject.getRotation()));
 
         layerNode.attachChild(blenderObjectNode);
         
@@ -177,7 +207,6 @@ public class BlenderImporter {
     }
 
     private void parseBlenderMeshWithObjectNode(BlenderMesh blenderMesh, Node blenderObjectNode) {
-        MathTypeConversions conversions = new MathTypeConversions();
         Map<BlenderMaterial, List<BlenderMeshTriangle>> trianglesByMaterial = blenderMesh.getTrianglesByMaterial();
         for (Map.Entry<BlenderMaterial, List<BlenderMeshTriangle>> entry : trianglesByMaterial.entrySet()) {
             List<RenderState> renderStates = blenderMaterialToRenderStateList(blenderMesh, entry.getKey());
@@ -321,12 +350,11 @@ public class BlenderImporter {
     private MaterialState blenderMaterialToMaterialState(BlenderMaterial blenderMaterial) {
         if(blenderMaterial == null) return null;
         
-        MathTypeConversions conversions = new MathTypeConversions();
         MaterialState state = new MaterialState();
         state.setEnabled(true);
-        state.setAmbient(conversions.ColorRGBA(blenderMaterial.getAmbientRgb()));
-        state.setDiffuse(conversions.ColorRGBA(blenderMaterial.getRgb()));
-        state.setSpecular(conversions.ColorRGBA(blenderMaterial.getSpecularRgb()));
+        state.setAmbient(MathTypeConversions.ColorRGBA(blenderMaterial.getAmbientRgb()));
+        state.setDiffuse(MathTypeConversions.ColorRGBA(blenderMaterial.getRgb()));
+        state.setSpecular(MathTypeConversions.ColorRGBA(blenderMaterial.getSpecularRgb()));
         state.setShininess(clamp(blenderMaterial.getSpecFactor().floatValue(), 128f, 0f));
         return state;
     }
@@ -380,18 +408,20 @@ public class BlenderImporter {
                     }
 
                     if(texture != null) {
+                        Texture.ApplyMode applyMode = Texture.ApplyMode.Decal;
+
                         List<MapTo> mapTo = blenderTexture.getMapTo();
                         BlendType blendType = blenderTexture.getBlendType();
                         if(blendType == BlendType.ADD) {
-                            texture.setApply(Texture.ApplyMode.Add);
+                            applyMode = Texture.ApplyMode.Add;
                         } else if(blendType == BlendType.BLEND) {
-                            texture.setApply(Texture.ApplyMode.Blend);
+                            applyMode = Texture.ApplyMode.Modulate;
                         } else if(blendType == BlendType.MUL) {
-                            texture.setApply(Texture.ApplyMode.Modulate);
+                            applyMode = Texture.ApplyMode.Combine;
                         } else {
-                            texture.setApply(Texture.ApplyMode.Decal);
-                            Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "todo: check this: {0}", blendType);
+                            Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "MapTo {0}, using Decal default", blendType);
                         }
+                        texture.setApply(applyMode);
                         textureState.setTexture(texture, textureIndex);
                     } else {
                         Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "cannot load texture");
@@ -436,7 +466,7 @@ public class BlenderImporter {
             blendState.setSourceFunction(BlendState.SourceFunction.SourceAlpha);
             blendState.setDestinationFunction(BlendState.DestinationFunction.OneMinusSourceAlpha);
         } else {
-            ColorRGBA transparent = new MathTypeConversions().ColorRGBA(blenderMaterial.getRgb());
+            ColorRGBA transparent = MathTypeConversions.ColorRGBA(blenderMaterial.getRgb());
             transparent.setAlpha(alpha);
             blendState.setConstantColor(transparent);
             blendState.setSourceFunction(BlendState.SourceFunction.ConstantAlpha);

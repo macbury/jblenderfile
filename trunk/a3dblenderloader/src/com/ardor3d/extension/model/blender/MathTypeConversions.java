@@ -7,22 +7,22 @@ import it.tukano.blenderfile.elements.BlenderTuple3;
 
 public class MathTypeConversions {
 
-    public Vector3 Vector3(BlenderTuple3 tuple) {
+    public static Vector3 Vector3(BlenderTuple3 tuple) {
         return new Vector3(tuple.getX().doubleValue(), tuple.getY().doubleValue(), tuple.getZ().doubleValue());
     }
 
     /* z-y-x */
-    public Quaternion Quaternion(BlenderTuple3 t) {
+    public static Quaternion Quaternion(BlenderTuple3 t) {
         return new Quaternion().fromEulerAngles(t.getZ().doubleValue(), t.getY().doubleValue(), t.getX().doubleValue());
     }
 
     /**
      * Instance initializer
      */
-    public MathTypeConversions() {
+    private MathTypeConversions() {
     }
 
-    public ColorRGBA ColorRGBA(BlenderTuple3 rgb) {
+    public static ColorRGBA ColorRGBA(BlenderTuple3 rgb) {
         return new ColorRGBA(rgb.getX().floatValue(), rgb.getY().floatValue(), rgb.getZ().floatValue(), 1);
     }
 }
