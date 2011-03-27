@@ -98,15 +98,20 @@ public class MeshObjectTransformer implements BlenderObjectTransformer {
                 BlenderDeformVertImpl vertexDeformData = new BlenderDeformVertImpl(vertexIndex);
                 //totweight = number of structures in wdwblock
                 BlenderFileBlock dwblock = md.getPointedBlock("dw", blenderFile);
-                List<SDNAStructure> weights = dwblock.listStructures("MDeformWeight");
-                for (SDNAStructure w : weights) {
-                    Number def_nr = w.getNumericFieldValue("def_nr", blenderFile);
-                    Number weight = w.getNumericFieldValue("weight", blenderFile);
-                    String boneName = meshDeformGroupNames.get(def_nr.intValue());
-                    BlenderDeformWeightImpl bdw = new BlenderDeformWeightImpl(def_nr, weight, boneName);
-                    vertexDeformData.add(bdw);
+                if(dwblock != null) {
+                    List<SDNAStructure> weights = dwblock.listStructures("MDeformWeight");
+                    for (SDNAStructure w : weights) {
+                        Number def_nr = w.getNumericFieldValue("def_nr", blenderFile);
+                        Number weight = w.getNumericFieldValue("weight", blenderFile);
+                        String boneName = meshDeformGroupNames.get(def_nr.intValue());
+                        BlenderDeformWeightImpl bdw = new BlenderDeformWeightImpl(def_nr, weight, boneName);
+                        vertexDeformData.add(bdw);
+                    }
+                    meshDeformVertList.add(vertexDeformData);
+                } else {
+                    Logger.getLogger(MeshObjectTransformer.class.getName()).log(Level.INFO, "null dw block");
                 }
-                meshDeformVertList.add(vertexDeformData);
+                
             }
         }
 
