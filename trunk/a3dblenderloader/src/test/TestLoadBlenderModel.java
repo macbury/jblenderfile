@@ -2,6 +2,7 @@ package test;
 
 import com.ardor3d.extension.model.blender.BlenderImporter;
 import com.ardor3d.extension.model.blender.BlenderStorage;
+import com.ardor3d.extension.model.blender.Log;
 import com.ardor3d.framework.Canvas;
 import com.ardor3d.framework.DisplaySettings;
 import com.ardor3d.framework.FrameHandler;
@@ -77,6 +78,7 @@ public class TestLoadBlenderModel implements Runnable, Updater, Scene {
      * @param args
      */
     public static void main(String[] args) {
+        Log.enabled = false;
         DisplaySettings settings = new DisplaySettings(1024, 768, 24, 0, 0, 8, 0, 0, false, false);
         TestLoadBlenderModel main = new TestLoadBlenderModel(settings, new File(args[0]));
         main.run();
