@@ -16,12 +16,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("c:\\users\\pgi\\documents\\models\\lightmaptest_2.blend");
+        File file = new File("c:\\users\\pgi\\documents\\models\\female_modified.blend");
         FileInputStream fin = null;
         BlenderFile blenderFile = null;
         try {
@@ -49,25 +48,14 @@ public class Test {
     }
 
     private static void writeMeshInfo(BlenderMesh m) {
-        int mcount = m.getMaterialCount().intValue();
-        for (int i= 0; i < mcount; i++) {
-            BlenderMaterial material = m.getMaterial(i);
-            writeMaterialInfo(material);
-        }
+        writeTextureInfo(m);
     }
 
     private static void writeTextureInfo(BlenderMesh m) {
-        String uv = m.getTexCoordSetNames().get(0);
-        for (BlenderMeshTriangle t : m.getTriangles()) {
-            BlenderTuple2 t1 = t.getT1(uv);
-            BlenderTuple2 t2 = t.getT2(uv);
-            BlenderTuple2 t3 = t.getT3(uv);
-            System.out.println(t.getV1().getPosition() + "," + t.getV2().getPosition() + "," + t.getV3().getPosition());
-            System.out.println(t1 + "," + t2 + "," + t3);
-        }
         int matCount = m.getMaterialCount().intValue();
         for (int i = 0; i < matCount; i++) {
             BlenderMaterial material = m.getMaterial(i);
+            System.out.println(material);
             int texCount = material.getTextureSlotsCount().intValue();
             for (int j= 0; j < texCount; j++) {
                 BlenderTexture texture = material.getTexture(j);
@@ -78,6 +66,18 @@ public class Test {
                 }
             }
         }
+    }
+
+    private static void writeTextureUVInfo(BlenderMesh m) {
+        String uv = m.getTexCoordSetNames().get(0);
+        for (BlenderMeshTriangle t : m.getTriangles()) {
+            BlenderTuple2 t1 = t.getT1(uv);
+            BlenderTuple2 t2 = t.getT2(uv);
+            BlenderTuple2 t3 = t.getT3(uv);
+            System.out.println(t.getV1().getPosition() + "," + t.getV2().getPosition() + "," + t.getV3().getPosition());
+            System.out.println(t1 + "," + t2 + "," + t3);
+        }
+
     }
 
     private static void writeMaterialInfo(BlenderMaterial material) {

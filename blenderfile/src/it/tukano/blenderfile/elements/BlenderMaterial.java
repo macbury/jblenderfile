@@ -1,10 +1,13 @@
 package it.tukano.blenderfile.elements;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A blender material.
@@ -12,72 +15,6 @@ import java.util.Map;
  * @author pgi
  */
 public interface BlenderMaterial {
-//
-//    class Mode {
-//
-//        public static final Mode TRACEABLE = new Mode(1, "TRACEABLE");
-//        public static final Mode SHADOW = new Mode(2, "SHADOW");
-//        public static final Mode SHADOWLESS = new Mode(4, "SHADOWLESS");
-//        public static final Mode WIRE = new Mode(8, "WIRE");
-//        public static final Mode VERTEXCOL = new Mode(16, "VERTEXCOL");
-//        public static final Mode HALO_SOFT = new Mode(16, "HALO_SOFT");
-//        public static final Mode HALO = new Mode(32, "HALO");
-//        public static final Mode ZTRANSP = new Mode(64, "ZTRANSP");
-//        public static final Mode VERTEXCOLP = new Mode(128, "VERTEXCOLP");
-//        public static final Mode ZINV = new Mode(256, "ZINV");
-//        public static final Mode HALO_RINGS = new Mode(256, "HALO_RINGS");
-//        public static final Mode ENV = new Mode(512, "ENV");
-//        public static final Mode HALO_LINES = new Mode(512, "HALO_LINES");
-//        public static final Mode ONLYSHADOW = new Mode(1024, "ONLYSHADOW");
-//        public static final Mode HALO_XALPHA = new Mode(1024, "HALO_XALPHA");
-//        public static final Mode STAR = new Mode(0x800, "STAR");
-//        public static final Mode FACETEXTURE = new Mode(0x800, "FACETEXTURE");
-//        public static final Mode HALOTEX = new Mode(0x1000, "HALOTEX");
-//        public static final Mode HALOPUNO = new Mode(0x2000, "HALOPUNO");
-//        public static final Mode ONLYCAST = new Mode(0x2000, "ONLYCAST");
-//        public static final Mode NOMIST = new Mode(0x4000, "NOMIST");
-//        public static final Mode HALO_SHADE = new Mode(0x4000, "HALO_SHADE");
-//        public static final Mode HALO_FLARE = new Mode(0x8000, "HALO_FLARE");
-//        public static final Mode TRANSP = new Mode(0x10000, "TRANSP");
-//        public static final Mode RAYTRANSP = new Mode(0x20000, "RAYTRANSP");
-//        public static final Mode RAYMIRROR = new Mode(0x40000, "RAYMIRROR");
-//        public static final Mode SHADOW_TRA = new Mode(0x80000, "SHADOW_TRA");
-//        public static final Mode RAMP_COL = new Mode(0x100000, "RAMP_COL");
-//        public static final Mode RAMP_SPEC = new Mode(0x200000, "RAMP_SPEC");
-//        public static final Mode RAYBIAS = new Mode(0x400000, "RAYBIAS");
-//        public static final Mode FULL_OSA = new Mode(0x800000, "FULL_OSA");
-//        public static final Mode TANGENT_STR = new Mode(0x1000000, "TANGENT_STR");
-//        public static final Mode SHADBUF = new Mode(0x2000000, "SHADBUF");
-//        public static final Mode TANGENT_V = new Mode(0x4000000, "TANGENT_V");
-//        public static final Mode NORMAP_TANG = new Mode(0x8000000, "NORMAP_TANG");
-//        public static final Mode GROUP_NOLAY = new Mode(0x10000000, "GROUP_NOLAY");
-//        public static final Mode FACETEXTURE_ALPHA = new Mode(0x20000000, "FACETEXTURE_ALPHA");
-//        public static final Mode STR_B_UNITS = new Mode(0x40000000, "STR_B_UNITS");
-//        public static final Mode STR_SURFDIFF = new Mode(0x80000000, "STR_SURFDIFF");
-//
-//        private final int flag;
-//        private final String name;
-//
-//        public Mode(Number flag, String name) {
-//            this.flag = flag.intValue();
-//            this.name = name;
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return flag;
-//        }
-//
-//        @Override
-//        public boolean equals(Object obj) {
-//            return obj instanceof Mode && ((Mode) obj).flag == this.flag;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "Mode." + name;
-//        }
-//    }
 
     /**
      * Texture blend values
@@ -417,6 +354,25 @@ public interface BlenderMaterial {
          */
         public Mode(Number flag) {
             this.flag = flag;
+        }
+
+        @Override
+        public String toString() {
+            Field[] fields = Mode.class.getFields();
+            for (int i = 0; i < fields.length; i++) {
+                Field field = fields[i];
+                if(field.getType() == Mode.class) {
+                    try {
+                        Mode m = (Mode) field.get(null);
+                        if(m.flag.intValue() == this.flag.intValue()) return "Mode." + field.getName();
+                    } catch (IllegalArgumentException ex) {
+                        Logger.getLogger(BlenderMaterial.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IllegalAccessException ex) {
+                        Logger.getLogger(BlenderMaterial.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+            return "Mode.Undefined";
         }
 
         /**

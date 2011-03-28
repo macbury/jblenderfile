@@ -48,4 +48,8 @@ class BlenderImageImpl implements BlenderImage {
         return data;
     }
 
+    @Override
+    public String toString() {
+        return String.format("BlenderImage path=%s hasJavaImage=%s hasDataBuffer=%s", getImagePath(), getJavaImage() != null, getImageData() == null ? "no buffer" :  getImageData().capacity());
+    }
 }
