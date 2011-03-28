@@ -52,8 +52,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Converts a blender scene into an ardor3d node list (one node per scene)
@@ -97,13 +95,13 @@ public class BlenderImporter {
                 sceneNodes.add(node);
             }
         } catch(IOException ex) {
-            Logger.getLogger(BlenderImporter.class.getName()).log(Level.SEVERE, null, ex);
+            Log.log(ex);
         } finally {
             if(stream != null) {
                 try {
                     stream.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(BlenderImporter.class.getName()).log(Level.SEVERE, null, ex);
+                    Log.log(ex);
                 }
             }
         }
@@ -158,7 +156,7 @@ public class BlenderImporter {
                 parseMeshObjectWithLayerNode(blenderObject, layerNode);
                 break;
             default:
-                Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "Parse ObjectType: {0}", blenderObject.getType());
+                Log.log("Parse ObjectType: ", blenderObject.getType());
         }
     }
 
@@ -186,20 +184,17 @@ public class BlenderImporter {
                 lightState.setEnabled(true);
                 lightState.attach(light);
             } else {
-                Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "Parse Lamp " + type);
+                Log.log("Parse Lamp: ", type);
             }
         }
     }
 
     private void parseMeshObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
         Node blenderObjectNode = new Node(blenderObject.getName());
-
         blenderObjectNode.setTranslation(MathTypeConversions.Vector3(blenderObject.getLocation()));
         blenderObjectNode.setScale(MathTypeConversions.Vector3(blenderObject.getScale()));
-        blenderObjectNode.setRotation(MathTypeConversions.Quaternion(blenderObject.getRotation()));
-
+        blenderObjectNode.setRotation(MathTypeConversions.Matrix3(blenderObject.getRotation()));
         layerNode.attachChild(blenderObjectNode);
-        
         List<BlenderMesh> blenderMeshList = blenderObject.getObjectData(BlenderMesh.class);
         for (BlenderMesh blenderMesh : blenderMeshList) {
             parseBlenderMeshWithObjectNode(blenderMesh, blenderObjectNode);
@@ -365,16 +360,25 @@ public class BlenderImporter {
     }
 
     private TextureState blenderMaterialToTextureState(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
-        if(blenderMaterial == null) return null;
+        if(blenderMaterial == null) {
+            Log.log("no material found for texture state");
+            return null;
+        }
 
+        Log.log("Reading texture state...");
+        
         TextureState textureState = (TextureState) RenderState.createState(RenderState.StateType.Texture);
         textureState.setEnabled(true);
 
         List<String> texCoordSetNames = mesh.getTexCoordSetNames();
         int textureSlotsCount = blenderMaterial.getTextureSlotsCount().intValue();
+
+        Log.log("Texture Slots Count: ", textureSlotsCount);
+
         for (int i= 0; i < textureSlotsCount; i++) {
             BlenderTexture blenderTexture = blenderMaterial.getTexture(i);
             if(blenderTexture != null) {
+                Log.log("Slot: ", i, " has texture: ", blenderTexture);
                 BlenderImage blenderTextureImage = blenderTexture.getBlenderImage();
                 if(blenderTextureImage != null) {
                     String uvName = blenderTexture.getUVName();
@@ -391,7 +395,7 @@ public class BlenderImporter {
                         try {
                             textureImageSource = new URLResourceSource(imageFile.toURI().toURL());
                         } catch (MalformedURLException ex) {
-                            Logger.getLogger(BlenderImporter.class.getName()).log(Level.SEVERE, null, ex);
+                            Log.log(ex);
                         }
                     } else {
                        textureImageSource = texSource.getRelativeSource(blenderTextureImage.getImagePath());
@@ -400,11 +404,13 @@ public class BlenderImporter {
                     Texture texture = null;
 
                     if(textureImageSource != null) {
+                        Log.log("loading texture from file:", textureImageSource);
                         texture = TextureManager.load(textureImageSource, Texture.MinificationFilter.Trilinear, true);
                     } else if(blenderTextureImage.getJavaImage() != null) {
+                        Log.log("loading texture from java image");
                         texture = AWTTextureUtil.loadTexture(blenderTextureImage.getJavaImage(), Texture.MinificationFilter.Trilinear, TextureStoreFormat.RGBA8, true);
                     } else {
-                        Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "cannot load texture");
+                        Log.log("cannot load texture (", textureImageSource, ")(", blenderTextureImage,")");
                     }
 
                     if(texture != null) {
@@ -419,12 +425,12 @@ public class BlenderImporter {
                         } else if(blendType == BlendType.MUL) {
                             applyMode = Texture.ApplyMode.Combine;
                         } else {
-                            Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "MapTo {0}, using Decal default", blendType);
+                            Log.log("MapTo", blendType, "using Decal default");
                         }
                         texture.setApply(applyMode);
                         textureState.setTexture(texture, textureIndex);
                     } else {
-                        Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "cannot load texture");
+                        Log.log("cannot load texture");
                     }
                 }
             }
@@ -440,16 +446,16 @@ public class BlenderImporter {
      */
     private BlendState blenderMaterialToBlendState(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
         if(blenderMaterial == null) {
-            Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "no material -> no blend state");
+            Log.log("no material -> no blend state");
             return null;
         }
         if(!blenderMaterial.isModeOn(BlenderMaterial.Mode.TRANSP)) {
-            Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "material transparency is off");
+            Log.log("material transparency is off");
             return null;
         }
         float alpha = blenderMaterial.getAlpha().floatValue();
         if(alpha == 1.0f) {
-            Logger.getLogger(BlenderImporter.class.getName()).log(Level.INFO, "alpha == 1, no blend state");
+            Log.log("alpha == 1, no blend state");
             return null;
         }
         boolean hasDiffuseTexture = false;
