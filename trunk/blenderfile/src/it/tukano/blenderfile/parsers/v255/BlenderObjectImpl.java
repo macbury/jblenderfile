@@ -1,5 +1,6 @@
 package it.tukano.blenderfile.parsers.v255;
 
+import it.tukano.blenderfile.elements.BlenderMatrix4;
 import it.tukano.blenderfile.elements.BlenderObject;
 import it.tukano.blenderfile.elements.BlenderObjectData;
 import it.tukano.blenderfile.elements.BlenderScene;
@@ -23,6 +24,7 @@ public class BlenderObjectImpl implements BlenderObject {
     private final List<String> armatureObjectNames = new LinkedList<String>();
     private BlenderSceneLayer layer;
     private ArrayList<String> meshDeformGroupNames;
+    private BlenderMatrix4 objectMatrix;
 
     public synchronized ArrayList<String> getMeshDeformGroupNames() {
         return meshDeformGroupNames;
@@ -127,5 +129,13 @@ public class BlenderObjectImpl implements BlenderObject {
             }
         }
         return result;
+    }
+
+    synchronized void setObjectMatrix(BlenderMatrix4 objectMatrix) {
+        this.objectMatrix = objectMatrix;
+    }
+
+    public synchronized BlenderMatrix4 getObjectMatrix() {
+        return objectMatrix;
     }
 }

@@ -50,6 +50,37 @@ public class BlenderTuple3 {
                 Math.abs(that.getZ().doubleValue() - this.getZ().doubleValue()) < threshold.doubleValue();
     }
 
+    public BlenderMatrix3 eulerRadiansToRotationMatrix() {
+        float[] eul = {getX().floatValue(), getY().floatValue(), getZ().floatValue() };
+	double ci, cj, ch, si, sj, sh, cc, cs, sc, ss;
+
+	ci = Math.cos(eul[0]);
+	cj = Math.cos(eul[1]);
+	ch = Math.cos(eul[2]);
+	si = Math.sin(eul[0]);
+	sj = Math.sin(eul[1]);
+	sh = Math.sin(eul[2]);
+	cc = ci*ch;
+	cs = ci*sh;
+	sc = si*ch;
+	ss = si*sh;
+
+        return new BlenderMatrix3(new Number[] {
+            (cj*ch),(cj*sh),-sj,
+            (sj*sc-cs),(sj*ss+cc),(cj*si),
+            (sj*cc+ss),(sj*cs-sc),(cj*ci)
+        });
+//	mat[0][0] = (float)(cj*ch);
+//	mat[1][0] = (float)(sj*sc-cs);
+//	mat[2][0] = (float)(sj*cc+ss);
+//	mat[0][1] = (float)(cj*sh);
+//	mat[1][1] = (float)(sj*ss+cc);
+//	mat[2][1] = (float)(sj*cs-sc);
+//	mat[0][2] = (float)-sj;
+//	mat[1][2] = (float)(cj*si);
+//	mat[2][2] = (float)(cj*ci);
+    }
+
     @Override
     public int hashCode() {
         int hash = 5;
@@ -131,5 +162,12 @@ public class BlenderTuple3 {
 
     public BlenderTuple3 reverseComponents() {
         return new BlenderTuple3(getZ(), getY(), getX());
+    }
+
+    public BlenderTuple3 toRadians() {
+        return new BlenderTuple3(
+                Math.toRadians(getX().doubleValue()),
+                Math.toRadians(getY().doubleValue()),
+                Math.toRadians(getZ().doubleValue()));
     }
 }

@@ -27,6 +27,26 @@ public class BlenderMatrix4 {
         m33 = mm[15];
     }
 
+    public BlenderMatrix3 getRotation() {
+        return new BlenderMatrix3(new Number[] {
+            m00, m01, m02,
+            m10, m11, m12,
+            m20, m21, m22});
+    }
+
+    public BlenderTuple3 getTranslation() {
+        return new BlenderTuple3(m30, m31, m32);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.4f %.4f %.4f %.4f\n%.4f %.4f %.4f %.4f\n %.4f %.4f %.4f %.4f\n%.4f %.4f %.4f %.4f",
+                m00, m01, m02, m03,
+                m10, m11, m12, m13,
+                m20, m21, m22, m23,
+                m30, m31, m32, m33);
+    }
+
     public Number getM00() {
         return m00;
     }
