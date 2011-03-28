@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -38,6 +40,29 @@ public class BlenderFile {
     private final Map<Number, BlenderFileBlock> blenderFileBlocksForFilePosition;
     private final BinaryDataReader binaryDataReader;
     private List<BlenderScene> parsedScenes;
+
+    /**
+     * Initializes this blender file using the given url as input stream
+     * @param blenderFileUrl the path of the blender file to load
+     * @throws IOException if a read error occurs
+     */
+    public static BlenderFile newInstance(URL blenderFileUrl) {
+        BlenderFile file = null;
+        InputStream in = null;
+        try {
+            in = blenderFileUrl.openStream();
+            file = new BlenderFile(new BlenderFileParameters(in));
+        } catch(IOException ex) {
+            Logger.getLogger(BlenderFile.class.getName()).log(Level.SEVERE, "Error reading blender file", ex);
+        } finally {
+            if(in != null) try {
+                in.close();
+            } catch (IOException ex) {
+                Logger.getLogger(BlenderFile.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return file;
+    }
 
     /**
      * Initializes this blender file from the given input stream

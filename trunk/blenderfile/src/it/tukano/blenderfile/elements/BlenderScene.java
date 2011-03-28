@@ -25,4 +25,11 @@ public interface BlenderScene {
      * @return the list of layers in this scene
      */
     List<BlenderSceneLayer> getLayers();
+
+    /**
+     * Returns the first object with the given unqualified name (that is withouth the OB prefix)
+     * @param string the unqualified name of the object (Cube in OBCube, Cube.001 in OBCube.001 and so on)
+     * @return the requested object or null if no such object exists
+     */
+    BlenderObject findObjectWithUnqualifiedName(String string);
 }

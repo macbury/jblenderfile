@@ -1,5 +1,6 @@
 package it.tukano.blenderfile.parsers.v255;
 
+import it.tukano.blenderfile.elements.BlenderObject;
 import it.tukano.blenderfile.elements.BlenderSceneLayer;
 import it.tukano.blenderfile.elements.UnitSettings;
 import java.util.ArrayList;
@@ -67,5 +68,16 @@ public class BlenderSceneImpl implements it.tukano.blenderfile.elements.BlenderS
     @Override
     public String toString() {
         return String.format("[%s]", getSimpleName());
+    }
+
+    public BlenderObject findObjectWithUnqualifiedName(String string) {
+        for (BlenderSceneLayerImpl layer : layers.values()) {
+            for (BlenderObject blenderObject : layer.getBlenderObjects()) {
+                if(blenderObject.getUnqualifiedName().equals(string)) {
+                    return blenderObject;
+                }
+            }
+        }
+        return null;
     }
 }
