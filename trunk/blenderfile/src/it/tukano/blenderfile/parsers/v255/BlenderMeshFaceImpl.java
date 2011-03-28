@@ -9,26 +9,33 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Blender mesh face implementation
  * @author pgi
  */
 public class BlenderMeshFaceImpl implements BlenderMeshFace {
+
     public static List<BlenderMeshFace> readList(BlenderFile file, BlenderFileBlock block) throws IOException {
-        final int count = block.getStructuresCount().intValue();
-        final List<SDNAStructure> mFaceStructures = block.listStructures("MFace");
         final ArrayList<BlenderMeshFace> faceList = new ArrayList<BlenderMeshFace>();
-        for(int i = 0; i < count; i++) {
-            final SDNAStructure mFaceStructure = mFaceStructures.get(i);
-            final Number materialIndex = (Number) mFaceStructure.getFieldValue("mat_nr", file);
-            final Number edCode = (Number) mFaceStructure.getFieldValue("edcode", file);
-            final Number v1 = (Number) mFaceStructure.getFieldValue("v1", file);
-            final Number v2 = (Number) mFaceStructure.getFieldValue("v2", file);
-            final Number v3 = (Number) mFaceStructure.getFieldValue("v3", file);
-            final Number v4 = (Number) mFaceStructure.getFieldValue("v4", file);
-            BlenderMeshFaceImpl face = new BlenderMeshFaceImpl(i, materialIndex, v1, v2, v3, v4);
-            faceList.add(face);
+        if(block != null) {
+            final int count = block.getStructuresCount().intValue();
+            final List<SDNAStructure> mFaceStructures = block.listStructures("MFace");
+            for(int i = 0; i < count; i++) {
+                final SDNAStructure mFaceStructure = mFaceStructures.get(i);
+                final Number materialIndex = (Number) mFaceStructure.getFieldValue("mat_nr", file);
+                final Number edCode = (Number) mFaceStructure.getFieldValue("edcode", file);
+                final Number v1 = (Number) mFaceStructure.getFieldValue("v1", file);
+                final Number v2 = (Number) mFaceStructure.getFieldValue("v2", file);
+                final Number v3 = (Number) mFaceStructure.getFieldValue("v3", file);
+                final Number v4 = (Number) mFaceStructure.getFieldValue("v4", file);
+                BlenderMeshFaceImpl face = new BlenderMeshFaceImpl(i, materialIndex, v1, v2, v3, v4);
+                faceList.add(face);
+            }
+        } else {
+            Logger.getLogger(BlenderMeshFaceImpl.class.getName()).log(Level.INFO, "Null BlenderFileBlock");
         }
         return faceList;
     }
