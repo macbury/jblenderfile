@@ -62,7 +62,9 @@ public class BlenderFile {
                 sdna = new BlenderFileSdna(block);
             }
         }
-        if(sdna == null) throw new BlenderFileParsingException("No DNA1 file block found.");
+        if (sdna == null) {
+            throw new BlenderFileParsingException("No DNA1 file block found.");
+        }
         header.setSdna(sdna);
         blenderFileHeader = header;
         blenderFileSdna = sdna;

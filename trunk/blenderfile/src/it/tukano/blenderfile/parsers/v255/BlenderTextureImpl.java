@@ -58,21 +58,20 @@ public class BlenderTextureImpl implements BlenderTexture {
             if(packedFile != null) {
                 BlenderFileBlock dataBlock = packedFile.getPointedBlock("data", file);
                 Number dataSize = (Number) packedFile.getFieldValue("size", file);
-                if(dataBlock.getDataSize().intValue() == dataSize.intValue()) {
-                    BinaryDataReader blockData = dataBlock.getSubDataReader();
-                    ByteBuffer buffer = ByteBuffer.allocate(dataSize.intValue());
-                    blockData.fill(buffer);
-                    buffer.flip();
-                    blockData.jumpTo(0);
-                    image.setImageData(buffer);
-                    try {
-                        BufferedImage javaImage = ImageIO.read(blockData.asInputStream());
-                        image.setJavaImage(javaImage);
-                    } catch(IOException ex) {
-                        Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.INFO, "cannot read packed image as java image", ex);
-                    }
-                } else {
-                    Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.INFO, "cannot read data pack");
+                if(dataBlock.getDataSize().intValue() != dataSize.intValue()) {
+                    Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.WARNING, "data pack buffer size doesn't match, was {0} expected {1}", new Object[]{dataBlock.getDataSize().intValue(), dataSize.intValue()});
+                }
+                BinaryDataReader blockData = dataBlock.getSubDataReader();
+                ByteBuffer buffer = ByteBuffer.allocate(dataSize.intValue());
+                blockData.fill(buffer);
+                buffer.flip();
+                blockData.jumpTo(0);
+                image.setImageData(buffer);
+                try {
+                    BufferedImage javaImage = ImageIO.read(blockData.asInputStream());
+                    image.setJavaImage(javaImage);
+                } catch(IOException ex) {
+                    Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.INFO, "cannot read packed image as java image", ex);
                 }
             }
         } else {

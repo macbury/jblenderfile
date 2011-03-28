@@ -155,4 +155,13 @@ public class BlenderMaterialImpl implements BlenderMaterial {
     public List<Mode> getActiveModes() {
         return activeModes;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("Material Name:").append(name).append("\n");
+        buffer.append("Active Modes:").append(getActiveModes()).append("\n");
+        buffer.append("Active Texture Units: ").append(getActiveTextureUnits().size()).append("\n");
+        return buffer.toString();
+    }
 }
