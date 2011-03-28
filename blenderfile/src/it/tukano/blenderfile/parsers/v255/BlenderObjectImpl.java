@@ -44,6 +44,10 @@ public class BlenderObjectImpl implements BlenderObject {
         return name;
     }
 
+    public synchronized String getUnqualifiedName() {
+        return name.substring(2);
+    }
+
     public synchronized void setName(String name) {
         this.name = name;
     }

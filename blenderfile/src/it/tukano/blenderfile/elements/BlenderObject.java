@@ -51,6 +51,12 @@ public interface BlenderObject {
     String getName();
 
     /**
+     * Returns the name of this object withouth the qualifier (ie OB, SC, LA, AR ...)
+     * @return the unquaified name of this object
+     */
+    String getUnqualifiedName();
+
+    /**
      * Returns the location of this object
      * @return the location of this object
      */

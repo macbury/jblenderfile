@@ -28,12 +28,35 @@ public class BlenderTuple3 {
         this((Number) x, (Number) y, (Number) z);
     }
 
-    public BlenderTuple3 approximate(int decimalDigits) {
-        double scale = decimalDigits == 0 ? 1 : decimalDigits * 10;
-        long x = Math.round(getX().doubleValue() * scale);
-        long y = Math.round(getY().doubleValue() * scale);
-        long z = Math.round(getZ().doubleValue() * scale);
-        return new BlenderTuple3(x / scale, y / scale, z / scale);
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof BlenderTuple3) {
+            BlenderTuple3 that = (BlenderTuple3) obj;
+            return that.getX().equals(this.getX()) &&
+                    that.getY().equals(this.getY()) &&
+                    that.getZ().equals(this.getZ());
+        } else {
+            return false;
+        }
+    }
+
+    public boolean equalsWithinThreshold(BlenderTuple3 that, Number threshold, boolean print) {
+        if(print) {
+            System.out.println(this + " = " + that);
+        }
+        return
+                Math.abs(that.getX().doubleValue() - this.getX().doubleValue()) < threshold.doubleValue() &&
+                Math.abs(that.getY().doubleValue() - this.getY().doubleValue()) < threshold.doubleValue() &&
+                Math.abs(that.getZ().doubleValue() - this.getZ().doubleValue()) < threshold.doubleValue();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 97 * hash + (this.x != null ? this.x.hashCode() : 0);
+        hash = 97 * hash + (this.y != null ? this.y.hashCode() : 0);
+        hash = 97 * hash + (this.z != null ? this.z.hashCode() : 0);
+        return hash;
     }
 
     public Number getX() {
