@@ -97,4 +97,10 @@ public interface BlenderObject {
      * @return a list of the requested modifiers. Can be empty, never null.
      */
     List<BlenderObject> getModifiers(ObjectType type);
+
+    /**
+     * Returns the transform matrix of this object
+     * @return the transform matrix of this object
+     */
+    BlenderMatrix4 getObjectMatrix();
 }

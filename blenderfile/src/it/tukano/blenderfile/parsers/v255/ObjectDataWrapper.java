@@ -1,6 +1,7 @@
 package it.tukano.blenderfile.parsers.v255;
 
 import it.tukano.blenderfile.BlenderFile;
+import it.tukano.blenderfile.elements.BlenderMatrix4;
 import it.tukano.blenderfile.parserstructures.BlenderFileBlock;
 import it.tukano.blenderfile.parserstructures.SDNAStructure;
 import it.tukano.blenderfile.elements.BlenderObject.ObjectType;
@@ -32,6 +33,7 @@ public class ObjectDataWrapper {
     private final Number lay;
     private final SDNAStructure structure;
     private final ArrayList<String> meshDeformGroupNames;
+    private final BlenderMatrix4 objectMatrix;
 
     public ObjectDataWrapper(BlenderFile file, Number startPosition) throws IOException {
         SDNAStructure struct = file.getBlenderFileSdna().getStructureByName("Object", startPosition);
@@ -50,6 +52,12 @@ public class ObjectDataWrapper {
         quat = new BlenderTuple4(struct.getFieldValue("quat", file));//255
         dquat = new BlenderTuple4(struct.getFieldValue("dquat", file));//255
         lay = (Number) struct.getFieldValue("lay", file);
+        Number[] obmatrix = (Number[]) struct.getFieldValue("obmat", file);
+        if(obmatrix != null) {
+            objectMatrix = new BlenderMatrix4(obmatrix);
+        } else {
+            objectMatrix = null;
+        }
         BlenderListBase meshDeformListBase = new BlenderListBase((SDNAStructure) struct.getFieldValue("defbase", file), file);
         List<BlenderFileBlock> meshDeformListBaseBlocks = meshDeformListBase.getElements();
         ArrayList<String> deformGroups = new ArrayList<String>();
@@ -69,6 +77,7 @@ public class ObjectDataWrapper {
 
     public BlenderObjectImpl toBlenderObject() {
         BlenderObjectImpl o = new BlenderObjectImpl();
+        o.setObjectMatrix(objectMatrix);
         o.setName(name);
         o.setLocation(loc);
         o.setRotation(rot);
