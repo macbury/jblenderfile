@@ -8,6 +8,8 @@ import it.tukano.blenderfile.elements.BlenderTuple3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Blender mesh vertex
@@ -59,22 +61,26 @@ public class BlenderMeshVertexImpl implements BlenderMeshVertex {
     }
 
     public static ArrayList<BlenderMeshVertex> readList(BlenderFile blenderFile, BlenderFileBlock dataBlock) throws IOException {
-        final List<SDNAStructure> mVertStructures = dataBlock.listStructures("MVert");
         final ArrayList<BlenderMeshVertex> vertices = new ArrayList<BlenderMeshVertex>();
-        for(int i = 0; i < mVertStructures.size(); i++) {
-            final SDNAStructure mVertStructure = mVertStructures.get(i);
-            final BlenderTuple3 position = new BlenderTuple3(mVertStructure.getFieldValue("co", blenderFile));
-            BlenderTuple3 normals = new BlenderTuple3(mVertStructure.getFieldValue("no", blenderFile));
-            normals = new BlenderTuple3(
-                    normals.getX().shortValue() / (float) Short.MAX_VALUE,
-                    normals.getY().shortValue() / (float) Short.MAX_VALUE,
-                    normals.getZ().shortValue() / (float) Short.MAX_VALUE);
-            final Number materialNumber = (Number) mVertStructure.getFieldValue("mat_nr", blenderFile);
-            final Number flag = (Number) mVertStructure.getFieldValue("flag", blenderFile);
-            final Number bweight = (Number) mVertStructure.getFieldValue("bweight", blenderFile);
-            final Number index = i;
-            final BlenderMeshVertexImpl vertex = new BlenderMeshVertexImpl(index, materialNumber, normals, position, bweight, flag);
-            vertices.add(vertex);
+        if(dataBlock != null) {
+            final List<SDNAStructure> mVertStructures = dataBlock.listStructures("MVert");
+            for(int i = 0; i < mVertStructures.size(); i++) {
+                final SDNAStructure mVertStructure = mVertStructures.get(i);
+                final BlenderTuple3 position = new BlenderTuple3(mVertStructure.getFieldValue("co", blenderFile));
+                BlenderTuple3 normals = new BlenderTuple3(mVertStructure.getFieldValue("no", blenderFile));
+                normals = new BlenderTuple3(
+                        normals.getX().shortValue() / (float) Short.MAX_VALUE,
+                        normals.getY().shortValue() / (float) Short.MAX_VALUE,
+                        normals.getZ().shortValue() / (float) Short.MAX_VALUE);
+                final Number materialNumber = (Number) mVertStructure.getFieldValue("mat_nr", blenderFile);
+                final Number flag = (Number) mVertStructure.getFieldValue("flag", blenderFile);
+                final Number bweight = (Number) mVertStructure.getFieldValue("bweight", blenderFile);
+                final Number index = i;
+                final BlenderMeshVertexImpl vertex = new BlenderMeshVertexImpl(index, materialNumber, normals, position, bweight, flag);
+                vertices.add(vertex);
+            }
+        } else {
+            Logger.getLogger(BlenderMeshVertexImpl.class.getName()).log(Level.WARNING, "Null BlenderFiledDataBlock");
         }
         return vertices;
     }

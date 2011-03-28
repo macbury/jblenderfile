@@ -39,27 +39,30 @@ public class MeshObjectTransformer implements BlenderObjectTransformer {
         final BlenderTuple3 meshRotation = new BlenderTuple3(meshStructure.getFieldValue("rot", blenderFile));
         final BlenderTuple3 meshScale = new BlenderTuple3(meshStructure.getFieldValue("size", blenderFile));
         final String meshName = (String) ((SDNAStructure) meshStructure.getFieldValue("id", blenderFile)).getFieldValue("name", blenderFile);
-        final List<BlenderMeshVertex> meshVertices = BlenderMeshVertexImpl.readList(blenderFile, 
-                blenderFile.getBlockByOldMemAddress(meshStructure.getPointerFieldValue("mvert", blenderFile)));
+        final List<BlenderMeshVertex> meshVertices = BlenderMeshVertexImpl.readList(blenderFile, blenderFile.getBlockByOldMemAddress(meshStructure.getPointerFieldValue("mvert", blenderFile)));
         final List<BlenderMeshFace> meshFaces = BlenderMeshFaceImpl.readList(blenderFile,
                 blenderFile.getBlockByOldMemAddress(meshStructure.getPointerFieldValue("mface", blenderFile)));
 
         //load texture uv sets
         final SDNAStructure faceDataCustomData = (SDNAStructure) meshStructure.getFieldValue("fdata", blenderFile);
-        final Number faceDataAddress = faceDataCustomData.getPointerFieldValue("layers", blenderFile);
-        final List<SDNAStructure> faceDataCustomDataLayers = blenderFile.getBlockByOldMemAddress(faceDataAddress).listStructures("CustomDataLayer");
         final Map<String, List<MTFace>> texCoordSets = new HashMap<String, List<MTFace>>();
-        for (SDNAStructure customDataLayer : faceDataCustomDataLayers) {
-            final String name = (String) customDataLayer.getFieldValue("name", blenderFile);
-            final BlenderFileBlock dataBlock = customDataLayer.getPointedBlock("data", blenderFile);
-            final Number dataTypeCode = (Number) customDataLayer.getFieldValue("type", blenderFile);
-            final CustomDataType dataType = CustomDataType.valueOf(dataTypeCode);
-            if(CustomDataType.CD_MTFACE.equals(dataType)) {
-                final List<SDNAStructure> mtFaceStructures = dataBlock.listStructures("MTFace");
-                final List<MTFace> mtFaces = MTFace.listMtFaces(mtFaceStructures, blenderFile);
-                texCoordSets.put(name, mtFaces);
-                assignTexCoordsToFaces(name, meshFaces, mtFaces);
+        if(faceDataCustomData != null) {
+            final Number faceDataAddress = faceDataCustomData.getPointerFieldValue("layers", blenderFile);
+            final List<SDNAStructure> faceDataCustomDataLayers = blenderFile.getBlockByOldMemAddress(faceDataAddress).listStructures("CustomDataLayer");
+            for (SDNAStructure customDataLayer : faceDataCustomDataLayers) {
+                final String name = (String) customDataLayer.getFieldValue("name", blenderFile);
+                final BlenderFileBlock dataBlock = customDataLayer.getPointedBlock("data", blenderFile);
+                final Number dataTypeCode = (Number) customDataLayer.getFieldValue("type", blenderFile);
+                final CustomDataType dataType = CustomDataType.valueOf(dataTypeCode);
+                if(CustomDataType.CD_MTFACE.equals(dataType)) {
+                    final List<SDNAStructure> mtFaceStructures = dataBlock.listStructures("MTFace");
+                    final List<MTFace> mtFaces = MTFace.listMtFaces(mtFaceStructures, blenderFile);
+                    texCoordSets.put(name, mtFaces);
+                    assignTexCoordsToFaces(name, meshFaces, mtFaces);
+                }
             }
+        } else {
+            Logger.getLogger(MeshObjectTransformer.class.getName()).log(Level.INFO, "no face custom data, load texture uvs from ... ?");
         }
 
         //load materials

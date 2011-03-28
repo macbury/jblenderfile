@@ -96,6 +96,7 @@ public class BlenderFile {
         blenderFileBlocksForMemAddress = blockForMemAddress;
         binaryDataReader = reader;
         blenderFileBlocksForFilePosition = blockForFilePosition;
+        Logger.getLogger(BlenderFile.class.getName()).log(Level.INFO, "BlenderFile V. 0.0.2, .blend version number: {0}", header.getVersionNumber());
     }
 
     private static boolean isCompressed(BinaryDataReader reader) throws IOException {

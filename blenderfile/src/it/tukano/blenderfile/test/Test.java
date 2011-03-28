@@ -20,7 +20,7 @@ import java.util.List;
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("c:\\users\\pgi\\documents\\models\\female_modified.blend");
+        File file = new File("c:\\users\\pgi\\documents\\models\\car.blend");
         FileInputStream fin = null;
         BlenderFile blenderFile = null;
         try {
@@ -48,21 +48,33 @@ public class Test {
     }
 
     private static void writeMeshInfo(BlenderMesh m) {
-        writeTextureInfo(m);
+        writeTransformInfo(m);
+//        writeTextureInfo(m);
+    }
+
+    private static void writeTransformInfo(BlenderMesh m) {
+        BlenderObject container = m.getContainer();
+        System.out.println("*** blender object ");
+        System.out.println(container.getUnqualifiedName());
+        System.out.println("Location: " + container.getLocation());
+        System.out.println("Scale: " + container.getScale());
+        System.out.println("Rotation: " + container.getRotation().toDegrees());
     }
 
     private static void writeTextureInfo(BlenderMesh m) {
         int matCount = m.getMaterialCount().intValue();
         for (int i = 0; i < matCount; i++) {
             BlenderMaterial material = m.getMaterial(i);
-            System.out.println(material);
-            int texCount = material.getTextureSlotsCount().intValue();
-            for (int j= 0; j < texCount; j++) {
-                BlenderTexture texture = material.getTexture(j);
-                if(texture != null) {
-                    System.out.println(texture.getTextureImageName());
-                    System.out.println(texture.getBlenderImage());
-                    System.out.println(texture.getUVName());
+            if(material != null) {
+                System.out.println(material);
+                int texCount = material.getTextureSlotsCount().intValue();
+                for (int j= 0; j < texCount; j++) {
+                    BlenderTexture texture = material.getTexture(j);
+                    if(texture != null) {
+                        System.out.println(texture.getTextureImageName());
+                        System.out.println(texture.getBlenderImage());
+                        System.out.println(texture.getUVName());
+                    }
                 }
             }
         }
