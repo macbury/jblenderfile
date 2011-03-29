@@ -3,7 +3,6 @@ package com.ardor3d.extension.model.blender;
 import com.ardor3d.math.ColorRGBA;
 import com.ardor3d.math.Matrix3;
 import com.ardor3d.math.Matrix4;
-import com.ardor3d.math.Transform;
 import com.ardor3d.math.Vector3;
 import it.tukano.blenderfile.elements.BlenderMatrix3;
 import it.tukano.blenderfile.elements.BlenderMatrix4;
@@ -15,6 +14,18 @@ import it.tukano.blenderfile.elements.BlenderTuple3;
  * @author pgi
  */
 public class MathTypeConversions {
+
+    /**
+     * Helper method used to clamp a value
+     * @param value the value to clamp
+     * @param min the minium (inclusive) of the range
+     * @param max the maximum (inclusive) of the range
+     * @return the value clamped to the min-max range
+     */
+    public static float clamp(float value, float min, float max) {
+        value *= 128f;
+        return value > max ? max : value < min ? min : value;
+    }
 
     /**
      * Converts a tuple3 into a vector3
