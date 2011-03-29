@@ -1,5 +1,6 @@
 package it.tukano.blenderfile.parsers.v255;
 
+import it.tukano.blenderfile.Log;
 import it.tukano.blenderfile.elements.BlenderDeformVert;
 import it.tukano.blenderfile.elements.BlenderMaterial;
 import it.tukano.blenderfile.elements.BlenderMesh;
@@ -10,7 +11,6 @@ import it.tukano.blenderfile.elements.BlenderObject;
 import it.tukano.blenderfile.elements.BlenderTuple2;
 import it.tukano.blenderfile.elements.BlenderTuple3;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -74,6 +74,8 @@ public class BlenderMeshImpl implements BlenderMesh {
     }
 
     public Map<BlenderMaterial, List<BlenderMeshTriangle>> getTrianglesByMaterial() {
+        Log.info("todo: assign triangles that have no materials to null key");
+        
         List<BlenderMeshTriangle> triangles = getTriangles();
         Map<BlenderMaterial, List<BlenderMeshTriangle>> map = new HashMap<BlenderMaterial, List<BlenderMeshTriangle>>();
         for(int i = 0; i < triangles.size(); i++) {
