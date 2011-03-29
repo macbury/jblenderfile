@@ -213,10 +213,11 @@ public class BlenderImporter {
      * @param blenderObjectNode the node where to add the a3d mesh
      */
     private void parseBlenderMeshWithObjectNode(BlenderMesh blenderMesh, Node blenderObjectNode) {
-        Map<BlenderMaterial, List<BlenderMeshTriangle>> trianglesByMaterial = blenderMesh.getTrianglesByMaterial();
+        final MeshDataBuilder meshDataBuilder = new MeshDataBuilder();
+        final Map<BlenderMaterial, List<BlenderMeshTriangle>> trianglesByMaterial = blenderMesh.getTrianglesByMaterial();
         for (Map.Entry<BlenderMaterial, List<BlenderMeshTriangle>> entry : trianglesByMaterial.entrySet()) {
             List<RenderState> renderStates = blenderMaterialToRenderStateList(blenderMesh, entry.getKey());
-            MeshData meshData = blenderTriangleListToMeshData(blenderMesh, entry.getValue());
+            MeshData meshData = meshDataBuilder.blenderTriangleListToMeshData(blenderMesh, entry.getValue());
             Mesh mesh = new Mesh(blenderMesh.getName());
             for (RenderState renderState : renderStates) {
                 mesh.setRenderState(renderState);
@@ -238,10 +239,16 @@ public class BlenderImporter {
      * @return the set of render states (can be emtpy)
      */
     private List<RenderState> blenderMaterialToRenderStateList(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
-        List<RenderState> renderStateList = new ArrayList<RenderState>();
-        MaterialState materialState = blenderMaterialToMaterialState(blenderMaterial);
-        TextureState textureState = blenderMaterialToTextureState(mesh, blenderMaterial);
-        BlendState blendState = blenderMaterialToBlendState(mesh, blenderMaterial);
+        final MaterialStateBuilder materialBuilder = new MaterialStateBuilder();
+        final TextureStateBuilder textureBuilder = new TextureStateBuilder();
+        final BlendStateBuilder blendBuilder = new BlendStateBuilder();
+
+        final List<RenderState> renderStateList = new ArrayList<RenderState>();
+
+        final MaterialState materialState = materialBuilder.transformBlenderMaterial(blenderMaterial);
+        final TextureState textureState = textureBuilder.blenderMaterialToTextureState(mesh, blenderMaterial, getTextureSource());
+        final BlendState blendState = blendBuilder.blenderMaterialToBlendState(mesh, blenderMaterial);
+
         if(materialState != null) {
             renderStateList.add(materialState);
         }
@@ -252,318 +259,6 @@ public class BlenderImporter {
             renderStateList.add(blendState);
         }
         return renderStateList;
-    }
-
-    /**
-     * Transforms a set of blender mesh triangles into a mesh data. This is called for each material-triangles group in
-     * the mesh (blender maps materials to faces, a3d materials to meshes)
-     * @param mesh the blender mesh holding the triangles (and the uv layers)
-     * @param triangleList the list of triangles to transform
-     * @return the transformed mesh data
-     */
-    private MeshData blenderTriangleListToMeshData(BlenderMesh mesh, List<BlenderMeshTriangle> triangleList) {
-        FloatBuffer vertices = triangleListToVertexBuffer(triangleList);
-        FloatBuffer normals = triangleListToNormalBuffer(triangleList);
-        IntBuffer indices = triangleListToIndexBuffer(triangleList);
-        List<FloatBufferData> texcoords = triangleListToTexCoordBufferList(mesh, triangleList);
-        MeshData data = new MeshData();
-        if(vertices != null) {
-            data.setVertexBuffer(vertices);
-        }
-        if(normals != null) {
-            data.setNormalBuffer(normals);
-        }
-        if(texcoords != null) {
-            data.setTextureCoords(texcoords);
-        }
-        if(indices != null) {
-            data.setIndexBuffer(indices);
-            data.setIndexMode(IndexMode.Triangles);
-        }
-        return data;
-    }
-
-    /**
-     * Packs the positions of the given list of triangles into a FloatBuffer.
-     * @param triangleList the list of triangles to pack
-     * @return a float buffer with the positions of the vertices of the triangles in the given list. Each 9 entries
-     * defines a triangle.
-     */
-    private FloatBuffer triangleListToVertexBuffer(List<BlenderMeshTriangle> triangleList) {
-        int triangleCount = triangleList.size();
-        FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(triangleCount * 3 * 3);
-        for (BlenderMeshTriangle blenderMeshTriangle : triangleList) {
-            BlenderMeshVertex v1 = blenderMeshTriangle.getV1();
-            BlenderMeshVertex v2 = blenderMeshTriangle.getV2();
-            BlenderMeshVertex v3 = blenderMeshTriangle.getV3();
-            BlenderTuple3 p1 = v1.getPosition();
-            BlenderTuple3 p2 = v2.getPosition();
-            BlenderTuple3 p3 = v3.getPosition();
-            putTuples3IntoFloatBuffer(vertexBuffer, p1, p2, p3);
-        }
-        vertexBuffer.flip();
-        return vertexBuffer;
-    }
-
-    /**
-     * A convenience method to put a set of tuples into a float buffer, starting from the
-     * current position of the buffer
-     * @param buffer the buffer to fill
-     * @param tuples the tuples to push into the buffer
-     */
-    private void putTuples3IntoFloatBuffer(FloatBuffer buffer, BlenderTuple3... tuples) {
-        if(tuples == null) throw new IllegalArgumentException("tuples cannot be null");
-        for (int i = 0; i < tuples.length; i++) {
-            BlenderTuple3 tuple = tuples[i];
-            buffer.put(tuple.getX().floatValue()).put(tuple.getY().floatValue()).put(tuple.getZ().floatValue());
-        }
-    }
-
-    /**
-     * Creates a float buffer with the components of the normals of the triangles in the given list
-     * @param triangleList the list of triangles
-     * @return a float buffer with the normals of the given triangle's list. 3 float per vertex, 3 normals per
-     * triangle.
-     */
-    private FloatBuffer triangleListToNormalBuffer(List<BlenderMeshTriangle> triangleList) {
-        int triangleCount = triangleList.size();
-        FloatBuffer normalBuffer = BufferUtils.createFloatBuffer(triangleCount * 3 * 3);
-        for (BlenderMeshTriangle blenderMeshTriangle : triangleList) {
-            BlenderTuple3 n1 = blenderMeshTriangle.getV1().getNormal();
-            BlenderTuple3 n2 = blenderMeshTriangle.getV2().getNormal();
-            BlenderTuple3 n3 = blenderMeshTriangle.getV3().getNormal();
-            putTuples3IntoFloatBuffer(normalBuffer, n1, n2, n3);
-        }
-        normalBuffer.flip();
-        return normalBuffer;
-    }
-
-    /**
-     * Generates the indexing buffer for the given sequence of triangles.
-     * @param triangleList the list of triangles
-     * @return the index buffer. 1 index per vertex, 3 index per triangle.
-     */
-    private IntBuffer triangleListToIndexBuffer(List<BlenderMeshTriangle> triangleList) {
-        int triangleCount = triangleList.size();
-        IntBuffer indices = BufferUtils.createIntBuffer(triangleCount * 3);
-        while(indices.hasRemaining()) indices.put(indices.position());
-        indices.flip();
-        return indices;
-    }
-
-    /**
-     * Generates the set of uv coords taking data from a triangle list (contains the uvs) and
-     * the mesh (owning the triangle's list). The mesh contains the name of the available uv layers, the
-     * triangles contains the uv coords for all the layers.
-     * @param mesh the mesh containing the triangle list
-     * @param triangleList the list of triangles to convert into uv sets
-     * @return the uv layers.
-     */
-    private List<FloatBufferData> triangleListToTexCoordBufferList(BlenderMesh mesh, List<BlenderMeshTriangle> triangleList) {
-        int trianglesCount = triangleList.size();
-        int texCoordCount = trianglesCount * 3;
-        int texCoordBufferSize = texCoordCount * 2;
-        Collection<String> texCoordSetNames = mesh.getTexCoordSetNames();
-        Map<String, FloatBufferData> textureCoordinateBuffers = createTextureCoordinatesBuffer(texCoordSetNames, texCoordBufferSize);
-        for (BlenderMeshTriangle blenderMeshTriangle : triangleList) {
-            for (String string : texCoordSetNames) {
-                FloatBufferData texCoordBuffer = textureCoordinateBuffers.get(string);
-                BlenderTuple2 t1 = blenderMeshTriangle.getT1(string);
-                BlenderTuple2 t2 = blenderMeshTriangle.getT2(string);
-                BlenderTuple2 t3 = blenderMeshTriangle.getT3(string);
-                putTuples2IntoFloatBuffer(texCoordBuffer.getBuffer(), t1, t2, t3);
-            }
-        }
-        for (FloatBufferData floatBufferData : textureCoordinateBuffers.values()) {
-            floatBufferData.getBuffer().flip();
-        }
-        return new ArrayList<FloatBufferData>(textureCoordinateBuffers.values());
-    }
-
-    /**
-     * helper method used by triangleListToTexCoordBufferList, initializes the buffers used to hold the uv layers of a triangle's list
-     * @param texCoordSetNames the names of the uv layers
-     * @param texCoordBufferSize the size to use for the new buffers
-     * @return a map that associates a uv layer name to an empty buffer.
-     */
-    private Map<String, FloatBufferData> createTextureCoordinatesBuffer(Collection<String> texCoordSetNames, int texCoordBufferSize) {
-        Map<String, FloatBufferData> map = new HashMap<String, FloatBufferData>();
-        for (String string : texCoordSetNames) {
-            FloatBuffer buffer = BufferUtils.createFloatBuffer(texCoordBufferSize);
-            FloatBufferData bufferData = new FloatBufferData(buffer, 2);
-            map.put(string, bufferData);
-        }
-        return map;
-    }
-
-    /**
-     * helper method used to fill a float buffer with a set of tuples
-     * @param buffer the buffer to fill
-     * @param tuples the tuples to push into the buffer
-     */
-    private void putTuples2IntoFloatBuffer(FloatBuffer buffer, BlenderTuple2... tuples) {
-        if(tuples == null) throw new IllegalArgumentException("tuples cannot be null");
-        for (int i = 0; i < tuples.length; i++) {
-            BlenderTuple2 blenderTuple2 = tuples[i];
-            buffer.put(blenderTuple2.getX().floatValue()).put(blenderTuple2.getY().floatValue());
-        }
-    }
-
-    /**
-     * Transforms a blender material into a material state
-     * @param blenderMaterial the material to transform
-     * @return the material state or null if the blender material has no material data
-     */
-    private MaterialState blenderMaterialToMaterialState(BlenderMaterial blenderMaterial) {
-        if(blenderMaterial == null) return null;
-        
-        MaterialState state = new MaterialState();
-        state.setEnabled(true);
-        state.setAmbient(MathTypeConversions.ColorRGBA(blenderMaterial.getAmbientRgb()));
-        state.setDiffuse(MathTypeConversions.ColorRGBA(blenderMaterial.getRgb()));
-        state.setSpecular(MathTypeConversions.ColorRGBA(blenderMaterial.getSpecularRgb()));
-        state.setShininess(clamp(blenderMaterial.getSpecFactor().floatValue(), 128f, 0f));
-        return state;
-    }
-
-    /**
-     * Helper method used to clamp a value
-     * @param value the value to clamp
-     * @param min the minium (inclusive) of the range
-     * @param max the maximum (inclusive) of the range
-     * @return the value clamped to the min-max range
-     */
-    private float clamp(float value, float min, float max) {
-        value *= 128f;
-        return value > max ? max : value < min ? min : value;
-    }
-
-    /**
-     * Transforms a blender material into a texture state
-     * @param mesh the mesh that ownes the uv layers
-     * @param blenderMaterial the material to transform
-     * @return the texture state or null if the material has no texture data
-     */
-    private TextureState blenderMaterialToTextureState(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
-        if(blenderMaterial == null) {
-            Log.log("no material found for texture state");
-            return null;
-        }
-
-        Log.log("Reading texture state...");
-        
-        TextureState textureState = (TextureState) RenderState.createState(RenderState.StateType.Texture);
-        textureState.setEnabled(true);
-
-        List<String> texCoordSetNames = mesh.getTexCoordSetNames();
-        int textureSlotsCount = blenderMaterial.getTextureSlotsCount().intValue();
-
-        Log.log("Texture Slots Count: ", textureSlotsCount);
-
-        for (int i= 0; i < textureSlotsCount; i++) {
-            BlenderTexture blenderTexture = blenderMaterial.getTexture(i);
-            if(blenderTexture != null) {
-                Log.log("Slot: ", i, " has texture: ", blenderTexture);
-                BlenderImage blenderTextureImage = blenderTexture.getBlenderImage();
-                if(blenderTextureImage != null) {
-                    String uvName = blenderTexture.getUVName();
-                    int textureIndex = Math.max(0, texCoordSetNames.indexOf(uvName));
-                    String imagePath = blenderTextureImage.getImagePath();
-                    if(imagePath.startsWith("\\\\")) imagePath = imagePath.substring(2, imagePath.length());
-                    if(imagePath.startsWith("//")) imagePath = imagePath.substring(2, imagePath.length());
-                    File imageFile = new File(imagePath);
-
-                    ResourceSource texSource = getTextureSource();
-                    ResourceSource textureImageSource = null;
-                    
-                    if(imageFile.isAbsolute()) {
-                        try {
-                            textureImageSource = new URLResourceSource(imageFile.toURI().toURL());
-                        } catch (MalformedURLException ex) {
-                            Log.log(ex);
-                        }
-                    } else {
-                       textureImageSource = texSource.getRelativeSource(blenderTextureImage.getImagePath());
-                    }
-
-                    Texture texture = null;
-
-                    if(textureImageSource != null) {
-                        Log.log("loading texture from file:", textureImageSource);
-                        texture = TextureManager.load(textureImageSource, Texture.MinificationFilter.Trilinear, true);
-                    } else if(blenderTextureImage.getJavaImage() != null) {
-                        Log.log("loading texture from java image");
-                        texture = AWTTextureUtil.loadTexture(blenderTextureImage.getJavaImage(), Texture.MinificationFilter.Trilinear, TextureStoreFormat.RGBA8, true);
-                    } else {
-                        Log.log("cannot load texture (", textureImageSource, ")(", blenderTextureImage,")");
-                    }
-
-                    if(texture != null) {
-                        Texture.ApplyMode applyMode = Texture.ApplyMode.Decal;
-
-                        List<MapTo> mapTo = blenderTexture.getMapTo();
-                        BlendType blendType = blenderTexture.getBlendType();
-                        if(blendType == BlendType.ADD) {
-                            applyMode = Texture.ApplyMode.Add;
-                        } else if(blendType == BlendType.BLEND) {
-                            applyMode = Texture.ApplyMode.Modulate;
-                        } else if(blendType == BlendType.MUL) {
-                            applyMode = Texture.ApplyMode.Combine;
-                        } else {
-                            Log.log("MapTo", blendType, "using Decal default");
-                        }
-                        texture.setApply(applyMode);
-                        textureState.setTexture(texture, textureIndex);
-                    } else {
-                        Log.log("cannot load texture");
-                    }
-                }
-            }
-        }
-        return textureState;
-    }
-
-    /**
-     * Checks if the given material requires a blend state
-     * @param mesh the mesh whose material is parsed (unused...)
-     * @param blenderMaterial the blender material
-     * @return a BlendState or null, depending on the transparency settings of the material
-     */
-    private BlendState blenderMaterialToBlendState(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
-        if(blenderMaterial == null) {
-            Log.log("no material -> no blend state");
-            return null;
-        }
-        if(!blenderMaterial.isModeOn(BlenderMaterial.Mode.TRANSP)) {
-            Log.log("material transparency is off");
-            return null;
-        }
-        float alpha = blenderMaterial.getAlpha().floatValue();
-        if(alpha == 1.0f) {
-            Log.log("alpha == 1, no blend state");
-            return null;
-        }
-        boolean hasDiffuseTexture = false;
-        for (BlenderTexture blenderTexture : blenderMaterial.getActiveTextureUnits().values()) {
-            if(blenderTexture.getMapTo().contains(MapTo.COL)) {
-                hasDiffuseTexture = true;
-                break;
-            }
-        }
-        BlendState blendState = new BlendState();
-        blendState.setBlendEnabled(true);
-        blendState.setTestEnabled(true);
-        if(hasDiffuseTexture) {
-            blendState.setSourceFunction(BlendState.SourceFunction.SourceAlpha);
-            blendState.setDestinationFunction(BlendState.DestinationFunction.OneMinusSourceAlpha);
-        } else {
-            ColorRGBA transparent = MathTypeConversions.ColorRGBA(blenderMaterial.getRgb());
-            transparent.setAlpha(alpha);
-            blendState.setConstantColor(transparent);
-            blendState.setSourceFunction(BlendState.SourceFunction.ConstantAlpha);
-            blendState.setDestinationFunction(BlendState.DestinationFunction.OneMinusConstantAlpha);
-        }
-        return blendState;
     }
 
     /**
