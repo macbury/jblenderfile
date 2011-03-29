@@ -1,5 +1,6 @@
 package it.tukano.blenderfile.elements;
 
+import it.tukano.blenderfile.Log;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
@@ -366,9 +367,9 @@ public interface BlenderMaterial {
                         Mode m = (Mode) field.get(null);
                         if(m.flag.intValue() == this.flag.intValue()) return "Mode." + field.getName();
                     } catch (IllegalArgumentException ex) {
-                        Logger.getLogger(BlenderMaterial.class.getName()).log(Level.SEVERE, null, ex);
+                        Log.ex(ex);
                     } catch (IllegalAccessException ex) {
-                        Logger.getLogger(BlenderMaterial.class.getName()).log(Level.SEVERE, null, ex);
+                        Log.ex(ex);
                     }
                 }
             }

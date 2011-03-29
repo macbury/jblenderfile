@@ -53,12 +53,12 @@ public class BlenderFile {
             in = blenderFileUrl.openStream();
             file = new BlenderFile(new BlenderFileParameters(in));
         } catch(IOException ex) {
-            Logger.getLogger(BlenderFile.class.getName()).log(Level.SEVERE, "Error reading blender file", ex);
+            Log.ex(ex, "Error reading blender file");
         } finally {
             if(in != null) try {
                 in.close();
             } catch (IOException ex) {
-                Logger.getLogger(BlenderFile.class.getName()).log(Level.SEVERE, null, ex);
+                Log.ex(ex);
             }
         }
         return file;
@@ -96,9 +96,10 @@ public class BlenderFile {
         blenderFileBlocksForMemAddress = blockForMemAddress;
         binaryDataReader = reader;
         blenderFileBlocksForFilePosition = blockForFilePosition;
-        Logger.getLogger(BlenderFile.class.getName()).log(Level.INFO, "BlenderFile V. 0.0.2, .blend version number: {0}", header.getVersionNumber());
+        Log.info("BlenderFile V. 0.0.2, .blend version number:", header.getVersionNumber());
     }
 
+    /** Checks if the reader contains the blender file in compressed format. More or less. */
     private static boolean isCompressed(BinaryDataReader reader) throws IOException {
         Number mark = reader.getCurrentPosition();
         reader.jumpTo(0);
@@ -106,13 +107,14 @@ public class BlenderFile {
         reader.jumpTo(mark);
         final boolean gzipped = (ID1.intValue() == 0x1f);
         if(gzipped) {
-            Logger.getLogger(BlenderFile.class.getName()).log(Level.INFO, "gzip file found (hopefully)...");
+            Log.info("gzip file found (hopefully)...");
         }
         return gzipped;
     }
 
+    /** Decompress the given source in a temporary file and returns the uncompressed reader */
     private static BinaryDataReader decompress(BinaryDataReader source) throws IOException {
-        Logger.getLogger(BlenderFile.class.getName()).log(Level.INFO, "Decompressing gzip...");
+        Log.info("Decompressing gzip...");
         GZIPInputStream in = null;
         try {
             in = new GZIPInputStream(source.asInputStream());

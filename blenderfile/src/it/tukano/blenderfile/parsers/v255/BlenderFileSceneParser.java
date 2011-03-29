@@ -1,6 +1,7 @@
 package it.tukano.blenderfile.parsers.v255;
 
 import it.tukano.blenderfile.BlenderFile;
+import it.tukano.blenderfile.Log;
 import it.tukano.blenderfile.parserstructures.BlenderFileBlock;
 import it.tukano.blenderfile.parserstructures.BlenderFileHeader;
 import it.tukano.blenderfile.parserstructures.BlenderFileSdna;
@@ -91,7 +92,7 @@ public class BlenderFileSceneParser implements BlenderFileBlockParser {
         if(transformer != null) {
             transformer.transform(object, scene);
         } else {
-            Logger.getLogger(BlenderFileSceneParser.class.getName()).log(Level.INFO, "Object Type {0} not supported yet", object.getType());
+            Log.info("Object Type ", object.getType(), " not supported yet");
         }
     }
 

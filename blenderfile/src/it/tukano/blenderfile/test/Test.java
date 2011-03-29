@@ -20,7 +20,7 @@ import java.util.List;
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("c:\\users\\pgi\\documents\\models\\transform_test.blend");
+        File file = new File("c:\\users\\pgi\\documents\\models\\female.blend");
         FileInputStream fin = null;
         BlenderFile blenderFile = null;
         try {
