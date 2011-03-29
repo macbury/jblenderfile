@@ -19,6 +19,7 @@ import com.ardor3d.scenegraph.IndexBufferData;
 import com.ardor3d.scenegraph.Mesh;
 import com.ardor3d.scenegraph.MeshData;
 import com.ardor3d.scenegraph.Node;
+import com.ardor3d.scenegraph.hint.LightCombineMode;
 import com.ardor3d.util.TextureManager;
 import com.ardor3d.util.geom.BufferUtils;
 import com.ardor3d.util.resource.ResourceSource;
@@ -216,7 +217,8 @@ public class BlenderImporter {
         final MeshDataBuilder meshDataBuilder = new MeshDataBuilder();
         final Map<BlenderMaterial, List<BlenderMeshTriangle>> trianglesByMaterial = blenderMesh.getTrianglesByMaterial();
         for (Map.Entry<BlenderMaterial, List<BlenderMeshTriangle>> entry : trianglesByMaterial.entrySet()) {
-            List<RenderState> renderStates = blenderMaterialToRenderStateList(blenderMesh, entry.getKey());
+            final BlenderMaterial blenderMaterial = entry.getKey();
+            List<RenderState> renderStates = blenderMaterialToRenderStateList(blenderMesh, blenderMaterial);
             MeshData meshData = meshDataBuilder.blenderTriangleListToMeshData(blenderMesh, entry.getValue());
             Mesh mesh = new Mesh(blenderMesh.getName());
             for (RenderState renderState : renderStates) {
@@ -226,6 +228,13 @@ public class BlenderImporter {
             mesh.setModelBound(new BoundingBox());
             if(renderStateListContainsBlendState(renderStates)) {
                 mesh.getSceneHints().setRenderBucketType(RenderBucketType.Transparent);
+            }
+            if(blenderMaterial != null && blenderMaterial.isModeOn(BlenderMaterial.Mode.SHADELESS)) {
+                ColorRGBA solidColor = MathTypeConversions.ColorRGBA(blenderMaterial.getRgb());
+                Log.log("shadeless material found, applying solid color: ", solidColor);
+                mesh.clearRenderState(StateType.Material);
+                mesh.setDefaultColor(MathTypeConversions.ColorRGBA(blenderMaterial.getRgb()));
+                mesh.getSceneHints().setLightCombineMode(LightCombineMode.Off);
             }
             blenderObjectNode.attachChild(mesh);
         }
