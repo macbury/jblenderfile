@@ -21,7 +21,6 @@ public class MaterialStateBuilder {
         final MaterialState state = new MaterialState();
         state.setEnabled(true);
         
-        
         if(blenderMaterial.hasDiffuseShader(BlenderMaterial.DiffuseShader.LAMBERT)) {
             setupLambert(state, blenderMaterial);
         } else {
