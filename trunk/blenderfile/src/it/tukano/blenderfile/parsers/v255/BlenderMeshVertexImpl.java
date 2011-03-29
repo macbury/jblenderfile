@@ -1,6 +1,7 @@
 package it.tukano.blenderfile.parsers.v255;
 
 import it.tukano.blenderfile.BlenderFile;
+import it.tukano.blenderfile.Log;
 import it.tukano.blenderfile.parserstructures.BlenderFileBlock;
 import it.tukano.blenderfile.parserstructures.SDNAStructure;
 import it.tukano.blenderfile.elements.BlenderMeshVertex;
@@ -8,8 +9,6 @@ import it.tukano.blenderfile.elements.BlenderTuple3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Blender mesh vertex
@@ -80,7 +79,7 @@ public class BlenderMeshVertexImpl implements BlenderMeshVertex {
                 vertices.add(vertex);
             }
         } else {
-            Logger.getLogger(BlenderMeshVertexImpl.class.getName()).log(Level.WARNING, "Null BlenderFiledDataBlock");
+            Log.info("Null BlenderFiledDataBlock");
         }
         return vertices;
     }

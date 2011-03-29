@@ -1,6 +1,7 @@
 package it.tukano.blenderfile.parsers.v255;
 
 import it.tukano.blenderfile.BlenderFile;
+import it.tukano.blenderfile.Log;
 import it.tukano.blenderfile.parserstructures.BlenderFileBlock;
 import it.tukano.blenderfile.parserstructures.SDNAStructure;
 import it.tukano.blenderfile.elements.BlenderImage;
@@ -59,7 +60,7 @@ public class BlenderTextureImpl implements BlenderTexture {
                 BlenderFileBlock dataBlock = packedFile.getPointedBlock("data", file);
                 Number dataSize = (Number) packedFile.getFieldValue("size", file);
                 if(dataBlock.getDataSize().intValue() != dataSize.intValue()) {
-                    Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.WARNING, "data pack buffer size doesn't match, was {0} expected {1}", new Object[]{dataBlock.getDataSize().intValue(), dataSize.intValue()});
+                    Log.info("data pack buffer size doesn't match, was", dataBlock.getDataSize().intValue(), "expected", dataSize.intValue());
                 }
                 BinaryDataReader blockData = dataBlock.getSubDataReader();
                 ByteBuffer buffer = ByteBuffer.allocate(dataSize.intValue());
@@ -71,11 +72,11 @@ public class BlenderTextureImpl implements BlenderTexture {
                     BufferedImage javaImage = ImageIO.read(blockData.asInputStream());
                     image.setJavaImage(javaImage);
                 } catch(IOException ex) {
-                    Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.INFO, "cannot read packed image as java image", ex);
+                    Log.ex(ex, "cannot read packed image as java image");
                 }
             }
         } else {
-            Logger.getLogger(BlenderTextureImpl.class.getName()).log(Level.INFO, "no ima structure found");
+            Log.info("no ima structure found");
         }
         textureImageName = imageName;
         blenderImage = image;

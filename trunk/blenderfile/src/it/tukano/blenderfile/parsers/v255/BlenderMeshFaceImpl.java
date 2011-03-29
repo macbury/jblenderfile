@@ -1,6 +1,7 @@
 package it.tukano.blenderfile.parsers.v255;
 
 import it.tukano.blenderfile.BlenderFile;
+import it.tukano.blenderfile.Log;
 import it.tukano.blenderfile.parserstructures.BlenderFileBlock;
 import it.tukano.blenderfile.parserstructures.SDNAStructure;
 import it.tukano.blenderfile.elements.BlenderMeshFace;
@@ -35,7 +36,7 @@ public class BlenderMeshFaceImpl implements BlenderMeshFace {
                 faceList.add(face);
             }
         } else {
-            Logger.getLogger(BlenderMeshFaceImpl.class.getName()).log(Level.INFO, "Null BlenderFileBlock");
+            Log.info("Null BlenderFileBlock");
         }
         return faceList;
     }

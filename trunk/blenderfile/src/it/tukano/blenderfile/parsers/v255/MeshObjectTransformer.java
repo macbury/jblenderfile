@@ -1,6 +1,7 @@
 package it.tukano.blenderfile.parsers.v255;
 
 import it.tukano.blenderfile.BlenderFile;
+import it.tukano.blenderfile.Log;
 import it.tukano.blenderfile.parserstructures.BlenderFileBlock;
 import it.tukano.blenderfile.parserstructures.BlenderFileHeader;
 import it.tukano.blenderfile.parserstructures.BlenderFileSdna;
@@ -62,7 +63,7 @@ public class MeshObjectTransformer implements BlenderObjectTransformer {
                 }
             }
         } else {
-            Logger.getLogger(MeshObjectTransformer.class.getName()).log(Level.INFO, "no face custom data, load texture uvs from ... ?");
+            Log.info("no face custom data, load texture uvs from ... ?");
         }
 
         //load materials
@@ -112,7 +113,7 @@ public class MeshObjectTransformer implements BlenderObjectTransformer {
                     }
                     meshDeformVertList.add(vertexDeformData);
                 } else {
-                    Logger.getLogger(MeshObjectTransformer.class.getName()).log(Level.INFO, "null dw block");
+                    Log.info("null dw block");
                 }
                 
             }
@@ -165,10 +166,10 @@ public class MeshObjectTransformer implements BlenderObjectTransformer {
         SDNAStructure modifierDataPrev = (SDNAStructure) modifierData.getFieldValue("prev", file);
         BlenderFileBlock armatureObject = struct.getPointedBlock("object", file);
         if(modifierDataNext != null) {
-            Logger.getLogger(MeshObjectTransformer.class.getName()).log(Level.INFO, "modifier data has next element");
+            Log.info("modifier data has next element");
         }
         if(modifierDataPrev != null) {
-            Logger.getLogger(MeshObjectTransformer.class.getName()).log(Level.INFO, "modifier data has prev element");
+            Log.info("modifier data has prev element");
         }
         if(armatureObject != null) {
             List<SDNAStructure> objects = armatureObject.listStructures("Object");
