@@ -391,11 +391,11 @@ public interface BlenderMaterial {
         /**
          * Material enabled for shadows
          */
-        public static final Mode SHADOW = new Mode(2);
+        public static final Mode SHADE = new Mode(2);
         /**
          * Material insensitive to light or shadow
          */
-        public static final Mode SHADOWLESS = new Mode(4);
+        public static final Mode SHADELESS = new Mode(4);
         /**
          * Wire mode material
          */
@@ -543,7 +543,7 @@ public interface BlenderMaterial {
         public static final Mode STR_SURFDIFF = new Mode(0x80000000);
 
         public static final List<Mode> values = Collections.<Mode>unmodifiableList(Arrays.<Mode>asList(
-            SHADOW,SHADOWLESS,WIRE,VERTEXCOL,HALO_SOFT,
+            SHADE,SHADELESS,WIRE,VERTEXCOL,HALO_SOFT,
             HALO,ZTRANSP,VERTECOLP,ZINV,HALO_RINGS,
             ENV,HALO_LINES,ONLYSHADOW,HALO_XALPHA,STAR,
             FACETEXTURE,HALOTEX,HALOPUNO,ONLYCAST,NOMIST,
