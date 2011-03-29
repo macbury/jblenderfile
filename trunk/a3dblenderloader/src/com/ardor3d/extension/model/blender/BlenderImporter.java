@@ -189,6 +189,11 @@ public class BlenderImporter {
         }
     }
 
+    /**
+     * Transforms a blender object that wraps a mesh into a node with an ardor3d mesh
+     * @param blenderObject the blender object to transform
+     * @param layerNode the node where to attach the transformed data
+     */
     private void parseMeshObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
         Node blenderObjectNode = new Node(blenderObject.getName());
         blenderObjectNode.setTranslation(MathTypeConversions.Vector3(blenderObject.getLocation()));
@@ -201,6 +206,12 @@ public class BlenderImporter {
         }
     }
 
+    /**
+     * Called by parseMeshObject, transforms a blender mesh into a spatial and attached it to
+     * the given ardor3d node
+     * @param blenderMesh the blender mesh to transform
+     * @param blenderObjectNode the node where to add the a3d mesh
+     */
     private void parseBlenderMeshWithObjectNode(BlenderMesh blenderMesh, Node blenderObjectNode) {
         Map<BlenderMaterial, List<BlenderMeshTriangle>> trianglesByMaterial = blenderMesh.getTrianglesByMaterial();
         for (Map.Entry<BlenderMaterial, List<BlenderMeshTriangle>> entry : trianglesByMaterial.entrySet()) {
@@ -219,6 +230,13 @@ public class BlenderImporter {
         }
     }
 
+    /**
+     * Converts a blender material into a set of a3d render states
+     * @param mesh the blender mesh that uses the material (the mesh has the uv coords sets to check for
+     * texture mapping)
+     * @param blenderMaterial the material to transform
+     * @return the set of render states (can be emtpy)
+     */
     private List<RenderState> blenderMaterialToRenderStateList(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
         List<RenderState> renderStateList = new ArrayList<RenderState>();
         MaterialState materialState = blenderMaterialToMaterialState(blenderMaterial);
@@ -236,6 +254,13 @@ public class BlenderImporter {
         return renderStateList;
     }
 
+    /**
+     * Transforms a set of blender mesh triangles into a mesh data. This is called for each material-triangles group in
+     * the mesh (blender maps materials to faces, a3d materials to meshes)
+     * @param mesh the blender mesh holding the triangles (and the uv layers)
+     * @param triangleList the list of triangles to transform
+     * @return the transformed mesh data
+     */
     private MeshData blenderTriangleListToMeshData(BlenderMesh mesh, List<BlenderMeshTriangle> triangleList) {
         FloatBuffer vertices = triangleListToVertexBuffer(triangleList);
         FloatBuffer normals = triangleListToNormalBuffer(triangleList);
@@ -258,6 +283,12 @@ public class BlenderImporter {
         return data;
     }
 
+    /**
+     * Packs the positions of the given list of triangles into a FloatBuffer.
+     * @param triangleList the list of triangles to pack
+     * @return a float buffer with the positions of the vertices of the triangles in the given list. Each 9 entries
+     * defines a triangle.
+     */
     private FloatBuffer triangleListToVertexBuffer(List<BlenderMeshTriangle> triangleList) {
         int triangleCount = triangleList.size();
         FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(triangleCount * 3 * 3);
@@ -274,14 +305,26 @@ public class BlenderImporter {
         return vertexBuffer;
     }
 
-    private void putTuples3IntoFloatBuffer(FloatBuffer vertexBuffer, BlenderTuple3... tuples) {
+    /**
+     * A convenience method to put a set of tuples into a float buffer, starting from the
+     * current position of the buffer
+     * @param buffer the buffer to fill
+     * @param tuples the tuples to push into the buffer
+     */
+    private void putTuples3IntoFloatBuffer(FloatBuffer buffer, BlenderTuple3... tuples) {
         if(tuples == null) throw new IllegalArgumentException("tuples cannot be null");
         for (int i = 0; i < tuples.length; i++) {
             BlenderTuple3 tuple = tuples[i];
-            vertexBuffer.put(tuple.getX().floatValue()).put(tuple.getY().floatValue()).put(tuple.getZ().floatValue());
+            buffer.put(tuple.getX().floatValue()).put(tuple.getY().floatValue()).put(tuple.getZ().floatValue());
         }
     }
 
+    /**
+     * Creates a float buffer with the components of the normals of the triangles in the given list
+     * @param triangleList the list of triangles
+     * @return a float buffer with the normals of the given triangle's list. 3 float per vertex, 3 normals per
+     * triangle.
+     */
     private FloatBuffer triangleListToNormalBuffer(List<BlenderMeshTriangle> triangleList) {
         int triangleCount = triangleList.size();
         FloatBuffer normalBuffer = BufferUtils.createFloatBuffer(triangleCount * 3 * 3);
@@ -295,6 +338,11 @@ public class BlenderImporter {
         return normalBuffer;
     }
 
+    /**
+     * Generates the indexing buffer for the given sequence of triangles.
+     * @param triangleList the list of triangles
+     * @return the index buffer. 1 index per vertex, 3 index per triangle.
+     */
     private IntBuffer triangleListToIndexBuffer(List<BlenderMeshTriangle> triangleList) {
         int triangleCount = triangleList.size();
         IntBuffer indices = BufferUtils.createIntBuffer(triangleCount * 3);
@@ -303,6 +351,14 @@ public class BlenderImporter {
         return indices;
     }
 
+    /**
+     * Generates the set of uv coords taking data from a triangle list (contains the uvs) and
+     * the mesh (owning the triangle's list). The mesh contains the name of the available uv layers, the
+     * triangles contains the uv coords for all the layers.
+     * @param mesh the mesh containing the triangle list
+     * @param triangleList the list of triangles to convert into uv sets
+     * @return the uv layers.
+     */
     private List<FloatBufferData> triangleListToTexCoordBufferList(BlenderMesh mesh, List<BlenderMeshTriangle> triangleList) {
         int trianglesCount = triangleList.size();
         int texCoordCount = trianglesCount * 3;
@@ -324,6 +380,12 @@ public class BlenderImporter {
         return new ArrayList<FloatBufferData>(textureCoordinateBuffers.values());
     }
 
+    /**
+     * helper method used by triangleListToTexCoordBufferList, initializes the buffers used to hold the uv layers of a triangle's list
+     * @param texCoordSetNames the names of the uv layers
+     * @param texCoordBufferSize the size to use for the new buffers
+     * @return a map that associates a uv layer name to an empty buffer.
+     */
     private Map<String, FloatBufferData> createTextureCoordinatesBuffer(Collection<String> texCoordSetNames, int texCoordBufferSize) {
         Map<String, FloatBufferData> map = new HashMap<String, FloatBufferData>();
         for (String string : texCoordSetNames) {
@@ -334,14 +396,24 @@ public class BlenderImporter {
         return map;
     }
 
-    private void putTuples2IntoFloatBuffer(FloatBuffer texCoordBuffer, BlenderTuple2... tuples) {
+    /**
+     * helper method used to fill a float buffer with a set of tuples
+     * @param buffer the buffer to fill
+     * @param tuples the tuples to push into the buffer
+     */
+    private void putTuples2IntoFloatBuffer(FloatBuffer buffer, BlenderTuple2... tuples) {
         if(tuples == null) throw new IllegalArgumentException("tuples cannot be null");
         for (int i = 0; i < tuples.length; i++) {
             BlenderTuple2 blenderTuple2 = tuples[i];
-            texCoordBuffer.put(blenderTuple2.getX().floatValue()).put(blenderTuple2.getY().floatValue());
+            buffer.put(blenderTuple2.getX().floatValue()).put(blenderTuple2.getY().floatValue());
         }
     }
 
+    /**
+     * Transforms a blender material into a material state
+     * @param blenderMaterial the material to transform
+     * @return the material state or null if the blender material has no material data
+     */
     private MaterialState blenderMaterialToMaterialState(BlenderMaterial blenderMaterial) {
         if(blenderMaterial == null) return null;
         
@@ -354,11 +426,24 @@ public class BlenderImporter {
         return state;
     }
 
-    private float clamp(float factor, float min, float max) {
-        factor *= 128f;
-        return factor > max ? max : factor < min ? min : factor;
+    /**
+     * Helper method used to clamp a value
+     * @param value the value to clamp
+     * @param min the minium (inclusive) of the range
+     * @param max the maximum (inclusive) of the range
+     * @return the value clamped to the min-max range
+     */
+    private float clamp(float value, float min, float max) {
+        value *= 128f;
+        return value > max ? max : value < min ? min : value;
     }
 
+    /**
+     * Transforms a blender material into a texture state
+     * @param mesh the mesh that ownes the uv layers
+     * @param blenderMaterial the material to transform
+     * @return the texture state or null if the material has no texture data
+     */
     private TextureState blenderMaterialToTextureState(BlenderMesh mesh, BlenderMaterial blenderMaterial) {
         if(blenderMaterial == null) {
             Log.log("no material found for texture state");
@@ -505,6 +590,11 @@ public class BlenderImporter {
         }
     }
 
+    /**
+     * Checks if the given set of render states contains a BlendState
+     * @param renderStates the render state list to scan
+     * @return true if renderStates contains at least one BlendState
+     */
     private boolean renderStateListContainsBlendState(List<RenderState> renderStates) {
         for (RenderState renderState : renderStates) {
             if(renderState.getType() == StateType.Blend) return true;
