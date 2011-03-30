@@ -13,8 +13,6 @@ import it.tukano.blenderfile.parsers.BlenderFileBlockParser;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Parser for a blender scene v. 255.
@@ -85,6 +83,7 @@ public class BlenderFileSceneParser implements BlenderFileBlockParser {
             parseObject(scene, object);
             base = base.getNext();
         } while(base != null);
+        linkChildrenToParents(scene);
     }
 
     private void parseObject(BlenderSceneImpl scene, ObjectDataWrapper object) throws IOException {
@@ -93,6 +92,18 @@ public class BlenderFileSceneParser implements BlenderFileBlockParser {
             transformer.transform(object, scene);
         } else {
             Log.info("Object Type ", object.getType(), " not supported yet");
+        }
+    }
+
+    private void linkChildrenToParents(BlenderSceneImpl scene) {
+        Map<String, BlenderObjectImpl> uidToObjectMap = scene.getUidToObjectMap();
+        for (BlenderObjectImpl child : uidToObjectMap.values()) {
+            String parentUid = child.getParentName();
+            if(parentUid != null) {
+                BlenderObjectImpl parentObject = uidToObjectMap.get(parentUid);
+                child.setParent(parentObject);
+                parentObject.addChild(child);
+            }
         }
     }
 

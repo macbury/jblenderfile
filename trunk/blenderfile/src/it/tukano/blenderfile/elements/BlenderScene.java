@@ -27,6 +27,13 @@ public interface BlenderScene {
     List<BlenderSceneLayer> getLayers();
 
     /**
+     * Return a list (unshared) of the root objects in this scene (ie objects that have no parents). The objects can belong to
+     * different layers.
+     * @return the list of root object in this scene
+     */
+    List<BlenderObject> findSceneRoots();
+
+    /**
      * Returns the first object with the given unqualified name (that is withouth the OB prefix)
      * @param string the unqualified name of the object (Cube in OBCube, Cube.001 in OBCube.001 and so on)
      * @return the requested object or null if no such object exists

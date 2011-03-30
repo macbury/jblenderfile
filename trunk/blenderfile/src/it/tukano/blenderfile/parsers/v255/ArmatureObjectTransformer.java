@@ -24,7 +24,7 @@ public class ArmatureObjectTransformer implements BlenderObjectTransformer {
         BlenderFile file = object.getBlenderFile();
         BlenderFileBlock block = object.getObjectData();
         BlenderArmatureList armatures = new BlenderArmatureList();
-        BlenderObjectImpl parsedBlenderObject = object.toBlenderObject();
+        BlenderObjectImpl parsedBlenderObject = object.toBlenderObject(scene);
         for (SDNAStructure struct : block.listStructures("bArmature")) {
             BlenderArmatureImpl armature = new BlenderArmatureImpl();
 

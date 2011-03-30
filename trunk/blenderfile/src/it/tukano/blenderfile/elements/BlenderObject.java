@@ -39,6 +39,18 @@ public interface BlenderObject {
     }
 
     /**
+     * Returns the parent of this object, if any
+     * @return the parent of this object or null if this object has no parent
+     */
+    BlenderObject getParent();
+
+    /**
+     * Returns the children of this object
+     * @return the list of children of this object. Can be empty, never null
+     */
+    List<? extends BlenderObject> getChildren();
+
+    /**
      * Returns the layer of this object
      * @return the layer of this object
      */
@@ -57,19 +69,19 @@ public interface BlenderObject {
     String getUnqualifiedName();
 
     /**
-     * Returns the location of this object
+     * Returns the location of this object, relative to parent if any
      * @return the location of this object
      */
     BlenderTuple3 getLocation();
 
     /**
-     * Returns the rotation of this object
+     * Returns the rotation of this object, relative to parent if any
      * @return the rotation of this object
      */
     BlenderTuple3 getRotation();
 
     /**
-     * Returns the scale of this object
+     * Returns the scale of this object, relative to parent if any
      * @return the scale of this object
      */
     BlenderTuple3 getScale();
@@ -99,7 +111,7 @@ public interface BlenderObject {
     List<BlenderObject> getModifiers(ObjectType type);
 
     /**
-     * Returns the transform matrix of this object
+     * Returns the transform matrix of this object, relative to parent if any
      * @return the transform matrix of this object
      */
     BlenderMatrix4 getObjectMatrix();
