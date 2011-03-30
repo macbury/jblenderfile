@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Transforms the raw blender file data into a BlenderMesh instance. 
@@ -30,7 +28,7 @@ public class MeshObjectTransformer implements BlenderObjectTransformer {
     }
 
     public Object transform(ObjectDataWrapper object, BlenderSceneImpl scene) throws IOException {
-        final BlenderObjectImpl blenderObject = object.toBlenderObject();
+        final BlenderObjectImpl blenderObject = object.toBlenderObject(scene);
 
         final BlenderFile blenderFile = object.getBlenderFile();
         final BlenderFileBlock objectData = object.getObjectData();

@@ -25,6 +25,18 @@ public class BlenderObjectImpl implements BlenderObject {
     private BlenderSceneLayer layer;
     private ArrayList<String> meshDeformGroupNames;
     private BlenderMatrix4 objectMatrix;
+    private List<BlenderObjectImpl> children = new LinkedList<BlenderObjectImpl>();
+    private BlenderObject parent;
+
+    private final String parentName;
+
+    BlenderObjectImpl(String parentName) {
+        this.parentName = parentName;
+    }
+
+    String getParentName() {
+        return parentName;
+    }
 
     public synchronized ArrayList<String> getMeshDeformGroupNames() {
         return meshDeformGroupNames;
@@ -137,5 +149,21 @@ public class BlenderObjectImpl implements BlenderObject {
 
     public synchronized BlenderMatrix4 getObjectMatrix() {
         return objectMatrix;
+    }
+
+    public synchronized BlenderObject getParent() {
+        return parent;
+    }
+
+    public synchronized List<BlenderObjectImpl> getChildren() {
+        return Collections.<BlenderObjectImpl>unmodifiableList(children);
+    }
+
+    synchronized void setParent(BlenderObjectImpl parent) {
+        this.parent = parent;
+    }
+
+    synchronized void addChild(BlenderObjectImpl child) {
+        children.add(child);
     }
 }

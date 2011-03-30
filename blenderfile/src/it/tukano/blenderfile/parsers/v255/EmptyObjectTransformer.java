@@ -7,7 +7,7 @@ package it.tukano.blenderfile.parsers.v255;
 public class EmptyObjectTransformer implements BlenderObjectTransformer {
 
     public Object transform(ObjectDataWrapper object, BlenderSceneImpl scene) {
-        BlenderObjectImpl emptyObject = object.toBlenderObject();
+        BlenderObjectImpl emptyObject = object.toBlenderObject(scene);
         scene.getOrCreateLayer(object.getLay()).add(emptyObject);
         return emptyObject;
     }

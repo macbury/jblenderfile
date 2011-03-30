@@ -26,7 +26,7 @@ public class LampObjectTransformer implements BlenderObjectTransformer {
     public Object transform(ObjectDataWrapper object, BlenderSceneImpl scene) throws IOException {
         final BlenderFile blenderFile = object.getBlenderFile();
         final BlenderFileSdna sdna = blenderFile.getBlenderFileSdna();
-        final BlenderObjectImpl blenderObject = object.toBlenderObject();
+        final BlenderObjectImpl blenderObject = object.toBlenderObject(scene);
         final Number lampFilePosition = object.getObjectData().getPositionOfDataBlockInBlenderFile();
         final SDNAStructure lampStructure = (SDNAStructure) sdna.getStructureByName("Lamp", lampFilePosition);
         final String lampName = (String) ((SDNAStructure) lampStructure.getFieldValue("id", blenderFile)).getFieldValue("name", blenderFile);

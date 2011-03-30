@@ -34,6 +34,8 @@ public class ObjectDataWrapper {
     private final SDNAStructure structure;
     private final ArrayList<String> meshDeformGroupNames;
     private final BlenderMatrix4 objectMatrix;
+    private final String parentObjectName;
+    private BlenderObjectImpl blenderObject;
 
     public ObjectDataWrapper(BlenderFile file, Number startPosition) throws IOException {
         SDNAStructure struct = file.getBlenderFileSdna().getStructureByName("Object", startPosition);
@@ -52,6 +54,13 @@ public class ObjectDataWrapper {
         quat = new BlenderTuple4(struct.getFieldValue("quat", file));//255
         dquat = new BlenderTuple4(struct.getFieldValue("dquat", file));//255
         lay = (Number) struct.getFieldValue("lay", file);
+        SDNAStructure parentObject = (SDNAStructure) struct.getFieldValue("parent", file);
+        if(parentObject != null) {
+            SDNAStructure parentObjectId = (SDNAStructure) parentObject.getFieldValue("id", file);
+            parentObjectName = (String) parentObjectId.getFieldValue("name", file);
+        } else {
+            parentObjectName = null;
+        }
         Number[] obmatrix = (Number[]) struct.getFieldValue("obmat", file);
         if(obmatrix != null) {
             objectMatrix = new BlenderMatrix4(obmatrix);
@@ -75,8 +84,12 @@ public class ObjectDataWrapper {
         return structure;
     }
 
-    public BlenderObjectImpl toBlenderObject() {
-        BlenderObjectImpl o = new BlenderObjectImpl();
+    public synchronized BlenderObjectImpl toBlenderObject(BlenderSceneImpl scene) {
+        return blenderObject == null ? blenderObject = createBlenderObject(scene) : blenderObject;
+    }
+
+    private BlenderObjectImpl createBlenderObject(BlenderSceneImpl scene) {
+        BlenderObjectImpl o = new BlenderObjectImpl(parentObjectName);
         o.setObjectMatrix(objectMatrix);
         o.setName(name);
         o.setLocation(loc);
@@ -84,6 +97,7 @@ public class ObjectDataWrapper {
         o.setScale(size);
         o.setType(type);
         o.setDeformGroupNames(meshDeformGroupNames);
+        scene.registerBlenderObject(o);
         return o;
     }
 

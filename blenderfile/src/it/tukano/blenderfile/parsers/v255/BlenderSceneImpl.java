@@ -4,7 +4,9 @@ import it.tukano.blenderfile.elements.BlenderObject;
 import it.tukano.blenderfile.elements.BlenderSceneLayer;
 import it.tukano.blenderfile.elements.UnitSettings;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +18,7 @@ public class BlenderSceneImpl implements it.tukano.blenderfile.elements.BlenderS
     private String name;
     private UnitSettings unitSettings;
     private final Map<Number, BlenderSceneLayerImpl> layers = new HashMap<Number, BlenderSceneLayerImpl>();
+    private final Map<String, BlenderObjectImpl> uidToObjectMap = new HashMap<String, BlenderObjectImpl>();
 
     synchronized void setName(String name) {
         this.name = name;
@@ -79,5 +82,27 @@ public class BlenderSceneImpl implements it.tukano.blenderfile.elements.BlenderS
             }
         }
         return null;
+    }
+
+    synchronized Map<String, BlenderObjectImpl> getUidToObjectMap() {
+        return uidToObjectMap;
+    }
+
+    synchronized void registerBlenderObject(BlenderObjectImpl o) {
+        uidToObjectMap.put(o.getName(), o);
+    }
+
+    public List<BlenderObject> findSceneRoots() {
+        Collection<BlenderSceneLayerImpl> layerElements;
+        synchronized (this) {
+            layerElements = layers.values();
+        }
+        List<BlenderObject> roots = new LinkedList<BlenderObject>();
+        for (BlenderSceneLayerImpl layer : layerElements) {
+            for (BlenderObject object : layer.getBlenderObjects()) {
+                if(object.getParent() == null) roots.add(object);
+            }
+        }
+        return roots;
     }
 }
