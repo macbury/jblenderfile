@@ -11,14 +11,34 @@ import java.util.List;
  */
 public interface BlenderTexture {
 
+    /**
+     * Returns the name of the texture
+     * @return the name of this texture
+     */
     public String getTextureImageName();
 
+    /**
+     * Returns the name of the uv layer this texture is mapped to (if TexCo is UV)
+     * @return the name of the uv layer this texture is mapped to
+     */
     public String getUVName();
 
+    /**
+     * Returns the texture coordinate mapping (uv, cube, cylinder...)
+     * @return the texture coordinate mapping
+     */
     public TexCo getTexCo();
 
+    /**
+     * Returns the blend type for this texture (add, sub, mul ...)
+     * @return the blend type for this texture
+     */
     public BlendType getBlendType();
 
+    /**
+     * Returns the set of mappings of this texture (ambient, specular, reflection...)
+     * @return the set of mappings of this texture
+     */
     public List<MapTo> getMapTo();
 
     /**
