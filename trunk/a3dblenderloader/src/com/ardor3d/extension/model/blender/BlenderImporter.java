@@ -1,12 +1,8 @@
 package com.ardor3d.extension.model.blender;
 
 import com.ardor3d.bounding.BoundingBox;
-import com.ardor3d.image.Texture;
-import com.ardor3d.image.TextureStoreFormat;
-import com.ardor3d.image.util.AWTTextureUtil;
 import com.ardor3d.light.PointLight;
 import com.ardor3d.math.ColorRGBA;
-import com.ardor3d.renderer.IndexMode;
 import com.ardor3d.renderer.queue.RenderBucketType;
 import com.ardor3d.renderer.state.BlendState;
 import com.ardor3d.renderer.state.LightState;
@@ -14,42 +10,24 @@ import com.ardor3d.renderer.state.MaterialState;
 import com.ardor3d.renderer.state.RenderState;
 import com.ardor3d.renderer.state.RenderState.StateType;
 import com.ardor3d.renderer.state.TextureState;
-import com.ardor3d.scenegraph.FloatBufferData;
-import com.ardor3d.scenegraph.IndexBufferData;
 import com.ardor3d.scenegraph.Mesh;
 import com.ardor3d.scenegraph.MeshData;
 import com.ardor3d.scenegraph.Node;
+import com.ardor3d.scenegraph.Spatial;
 import com.ardor3d.scenegraph.hint.LightCombineMode;
-import com.ardor3d.util.TextureManager;
-import com.ardor3d.util.geom.BufferUtils;
 import com.ardor3d.util.resource.ResourceSource;
-import com.ardor3d.util.resource.URLResourceSource;
 import it.tukano.blenderfile.BlenderFile;
 import it.tukano.blenderfile.BlenderFileParameters;
-import it.tukano.blenderfile.elements.BlenderImage;
 import it.tukano.blenderfile.elements.BlenderLamp;
 import it.tukano.blenderfile.elements.BlenderLamp.LampType;
 import it.tukano.blenderfile.elements.BlenderMaterial;
-import it.tukano.blenderfile.elements.BlenderMaterial.BlendType;
-import it.tukano.blenderfile.elements.BlenderMaterial.MapTo;
 import it.tukano.blenderfile.elements.BlenderMesh;
 import it.tukano.blenderfile.elements.BlenderMeshTriangle;
-import it.tukano.blenderfile.elements.BlenderMeshVertex;
 import it.tukano.blenderfile.elements.BlenderObject;
 import it.tukano.blenderfile.elements.BlenderScene;
-import it.tukano.blenderfile.elements.BlenderSceneLayer;
-import it.tukano.blenderfile.elements.BlenderTexture;
-import it.tukano.blenderfile.elements.BlenderTuple2;
-import it.tukano.blenderfile.elements.BlenderTuple3;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -116,10 +94,9 @@ public class BlenderImporter {
      */
     private Node blenderSceneToArdor3dNode(BlenderScene blenderScene) {
         Node sceneNode = new Node(blenderScene.getName());
-        List<BlenderSceneLayer> layers = blenderScene.getLayers();
-        for (BlenderSceneLayer blenderSceneLayer : layers) {
-            Node blenderLayer = blenderSceneLayerToArdor3dNode(blenderSceneLayer);
-            sceneNode.attachChild(blenderLayer);
+        List<BlenderObject> blenderSceneRoots = blenderScene.findSceneRoots();
+        for (BlenderObject blenderObject : blenderSceneRoots) {
+            parseBlenderObject(blenderObject, sceneNode);
         }
         sceneNode.updateGeometricState(0);
         sceneNode.updateWorldTransform(true);
@@ -129,32 +106,24 @@ public class BlenderImporter {
     }
 
     /**
-     * Called during the conversion of a blender scene, transforms a layer into a node
-     * @param blenderSceneLayer the layer to transform
-     * @return the node with the layer contents
-     */
-    private Node blenderSceneLayerToArdor3dNode(BlenderSceneLayer blenderSceneLayer) {
-        Node layerNode = new Node("Layer " + blenderSceneLayer.getIndex());
-        List<BlenderObject> blenderObjectsInLayer = blenderSceneLayer.getBlenderObjects();
-        for (BlenderObject blenderObject : blenderObjectsInLayer) {
-            parseBlenderObjectWithLayerNode(blenderObject, layerNode);
-        }
-        return layerNode;
-    }
-
-    /**
      * Parses elements contained in a blender layer. Transforms a blender object into an ardor3d entity and
      * add it (if possible) to the node that represents the blender layer.
      * @param blenderObject the blender object to transform
-     * @param layerNode the layer node where to add the transformed object
+     * @param parentNode the layer node where to add the transformed object
      */
-    private void parseBlenderObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
+    private void parseBlenderObject(BlenderObject blenderObject, Node parentNode) {
         switch(blenderObject.getType()) {
             case LAMP:
-                parseLampObjectWithLayerNode(blenderObject, layerNode);
+                parseLampObject(blenderObject, parentNode);
                 break;
             case MESH:
-                parseMeshObjectWithLayerNode(blenderObject, layerNode);
+                parseMeshObject(blenderObject, parentNode);
+                break;
+            case EMPTY:
+                parseEmptyObject(blenderObject, parentNode);
+                break;
+            case ARMATURE:
+                parseArmatureObject(blenderObject, parentNode);
                 break;
             default:
                 Log.log("Parse ObjectType: ", blenderObject.getType());
@@ -164,9 +133,9 @@ public class BlenderImporter {
     /**
      * Parses a lamp object into a light and adds it to the layerNode
      * @param blenderObject the blender object that contains the light to transform
-     * @param layerNode the layer node
+     * @param parent the layer node
      */
-    private void parseLampObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
+    private void parseLampObject(BlenderObject blenderObject, Node parent) {
         List<BlenderLamp> lampList = blenderObject.getObjectData(BlenderLamp.class);
         for (BlenderLamp blenderLamp : lampList) {
             LampType type = blenderLamp.getType();
@@ -178,14 +147,23 @@ public class BlenderImporter {
                 light.setDiffuse(MathTypeConversions.ColorRGBA(blenderLamp.getRgb()));
                 light.setEnabled(true);
 
-                LightState lightState = (LightState) layerNode.getLocalRenderState(RenderState.StateType.Light);
+                LightState lightState = (LightState) parent.getLocalRenderState(RenderState.StateType.Light);
                 if(lightState == null) {//add the light state if missing (in case of multiple lights)
-                    layerNode.setRenderState(lightState = new LightState());
+                    parent.setRenderState(lightState = new LightState());
                 }
                 lightState.setEnabled(true);
                 lightState.attach(light);
             } else {
                 Log.log("Parse Lamp: ", type);
+            }
+        }
+        List<? extends BlenderObject> children = blenderObject.getChildren();
+        if(!children.isEmpty()) {
+            Node node = new Node(blenderObject.getName());
+            parent.attachChild(node);
+            setSpatialTransform(node, blenderObject);
+            for (BlenderObject child : children) {
+                parseBlenderObject(child, node);
             }
         }
     }
@@ -195,7 +173,7 @@ public class BlenderImporter {
      * @param blenderObject the blender object to transform
      * @param layerNode the node where to attach the transformed data
      */
-    private void parseMeshObjectWithLayerNode(BlenderObject blenderObject, Node layerNode) {
+    private void parseMeshObject(BlenderObject blenderObject, Node layerNode) {
         Node blenderObjectNode = new Node(blenderObject.getName());
         blenderObjectNode.setTranslation(MathTypeConversions.Vector3(blenderObject.getLocation()));
         blenderObjectNode.setScale(MathTypeConversions.Vector3(blenderObject.getScale()));
@@ -205,10 +183,13 @@ public class BlenderImporter {
         for (BlenderMesh blenderMesh : blenderMeshList) {
             parseBlenderMeshWithObjectNode(blenderMesh, blenderObjectNode);
         }
+        for (BlenderObject child : blenderObject.getChildren()) {
+            parseBlenderObject(child, blenderObjectNode);
+        }
     }
 
     /**
-     * Called by parseMeshObject, transforms a blender mesh into a spatial and attached it to
+     * Called by parseMeshObject, transforms a blender mesh into a spatial and attaches it to
      * the given ardor3d node
      * @param blenderMesh the blender mesh to transform
      * @param blenderObjectNode the node where to add the a3d mesh
@@ -271,30 +252,6 @@ public class BlenderImporter {
     }
 
     /**
-     * Used for debug purposes
-     * @param mesh the mesh to debug
-     */
-    private void dumpMesh(Mesh mesh) {
-        MeshData meshData = mesh.getMeshData();
-        FloatBuffer vertexBuffer = meshData.getVertexBuffer();
-        FloatBuffer normalBuffer = meshData.getNormalBuffer();
-        IndexBufferData<?> indices = meshData.getIndices();
-        if(vertexBuffer != null) for (int i= 0; i < vertexBuffer.capacity(); i+=3) {
-            System.out.printf("v %.4f %.4f %.4f%n", vertexBuffer.get(i), vertexBuffer.get(i+1), vertexBuffer.get(i+2));
-        }
-        if(normalBuffer != null) for (int i= 0; i < normalBuffer.capacity(); i+=3) {
-            System.out.printf("vn %.4f %.4f %.4f%n", normalBuffer.get(i), normalBuffer.get(i+1), normalBuffer.get(i+2));
-        }
-        List<FloatBufferData> textureCoords = meshData.getTextureCoords();
-        if(textureCoords.size() > 0) {
-            FloatBuffer buffer = textureCoords.get(0).getBuffer();
-            for (int i= 0; i < buffer.capacity(); i+=2) {
-                System.out.printf("vt %.4f %.4f%n", buffer.get(i), buffer.get(i+1));
-            }
-        }
-    }
-
-    /**
      * Checks if the given set of render states contains a BlendState
      * @param renderStates the render state list to scan
      * @return true if renderStates contains at least one BlendState
@@ -304,5 +261,32 @@ public class BlenderImporter {
             if(renderState.getType() == StateType.Blend) return true;
         }
         return false;
+    }
+
+    private void parseEmptyObject(BlenderObject blenderObject, Node parentNode) {
+        Node node = new Node(blenderObject.getName());
+        node.setTranslation(MathTypeConversions.Vector3(blenderObject.getLocation()));
+        node.setScale(MathTypeConversions.Vector3(blenderObject.getScale()));
+        node.setRotation(MathTypeConversions.Matrix3(blenderObject.getRotation()));
+        parentNode.attachChild(node);
+        for (BlenderObject child : blenderObject.getChildren()) {
+            parseBlenderObject(blenderObject, node);
+        }
+    }
+
+    private void setSpatialTransform(Spatial spatial, BlenderObject blenderObject) {
+        spatial.setTranslation(MathTypeConversions.Vector3(blenderObject.getLocation()));
+        spatial.setScale(MathTypeConversions.Vector3(blenderObject.getScale()));
+        spatial.setRotation(MathTypeConversions.Matrix3(blenderObject.getRotation()));
+    }
+
+    private void parseArmatureObject(BlenderObject blenderObject, Node parentNode) {
+        Log.log("parse armature object");
+        Node node = new Node(blenderObject.getName());
+        setSpatialTransform(node, blenderObject);
+        parentNode.attachChild(node);
+        for (BlenderObject child : blenderObject.getChildren()) {
+            parseBlenderObject(child, node);
+        }
     }
 }
