@@ -15,8 +15,12 @@ import it.tukano.blenderfile.elements.BlenderMaterial.MapTo;
 import it.tukano.blenderfile.elements.BlenderMesh;
 import it.tukano.blenderfile.elements.BlenderTexture;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Transforms a blender material into a TextureState
@@ -62,18 +66,22 @@ public class TextureStateBuilder {
 
                     ResourceSource textureImageSource = null;
 
-                    if(imageFile.isAbsolute()) {
+                    if(imageFile.isAbsolute() && imageFile.exists()) {
                         try {
                             textureImageSource = new URLResourceSource(imageFile.toURI().toURL());
                         } catch (MalformedURLException ex) {
                             Log.log(ex);
                         }
                     } else {
-                       textureImageSource = texSource.getRelativeSource(blenderTextureImage.getImagePath());
+                        File file = new File(blenderTextureImage.getImagePath());
+                        String path = file.getPath().substring(file.getParent().length() + 1);
+                        Log.log("Relative image path: " + path);
+                        textureImageSource = texSource.getRelativeSource(path);
                     }
 
                     Texture texture = null;
 
+                    Log.log("loading blender texture image ", blenderTextureImage);
                     if(textureImageSource != null) {
                         Log.log("loading texture from file:", textureImageSource);
                         texture = TextureManager.load(textureImageSource, Texture.MinificationFilter.Trilinear, true);
