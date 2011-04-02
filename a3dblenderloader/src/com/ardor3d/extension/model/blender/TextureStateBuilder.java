@@ -74,7 +74,7 @@ public class TextureStateBuilder {
                         }
                     } else {
                         File file = new File(blenderTextureImage.getImagePath());
-                        String path = file.getPath().substring(file.getParent().length() + 1);
+                        String path = imageFile.isAbsolute() ? file.getPath().substring(file.getParent().length()) :  imageFile.getPath();
                         Log.log("Relative image path: " + path);
                         textureImageSource = texSource.getRelativeSource(path);
                     }
