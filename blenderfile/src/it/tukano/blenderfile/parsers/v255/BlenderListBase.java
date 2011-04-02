@@ -16,6 +16,11 @@ public class BlenderListBase {
     private final List<BlenderFileBlock> blockList;
 
     public BlenderListBase(SDNAStructure listBaseStructure, BlenderFile file) throws IOException {
+        if(listBaseStructure == null) {//fix for 2.37
+            blockList = Collections.emptyList();
+            return;
+        }
+
         BlenderFileBlock first = listBaseStructure.getPointedBlock("first", file);
         BlenderFileBlock last = listBaseStructure.getPointedBlock("last", file);
         List<BlenderFileBlock> list = new LinkedList<BlenderFileBlock>();
