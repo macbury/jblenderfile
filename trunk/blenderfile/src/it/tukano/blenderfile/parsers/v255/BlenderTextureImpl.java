@@ -74,6 +74,8 @@ public class BlenderTextureImpl implements BlenderTexture {
                 } catch(IOException ex) {
                     Log.ex(ex, "cannot read packed image as java image");
                 }
+            } else {
+                Log.info("blender image ", imageId,  " has no packed file");
             }
         } else {
             Log.info("no ima structure found");
