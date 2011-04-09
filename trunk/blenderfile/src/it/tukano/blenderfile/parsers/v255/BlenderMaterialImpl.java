@@ -149,7 +149,13 @@ public class BlenderMaterialImpl implements BlenderMaterial {
     }
 
     public Map<Integer, BlenderTexture> getActiveTextureUnits() {
-        return textureUnits;
+        Map<Integer, BlenderTexture> units = new HashMap<Integer, BlenderTexture>();
+        for (Map.Entry<Integer, BlenderTexture> entry : textureUnits.entrySet()) {
+            if(entry.getKey() != null && entry.getValue() != null && entry.getValue().getBlenderImage() != null) {
+                units.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return units;
     }
 
     public List<Mode> getActiveModes() {
