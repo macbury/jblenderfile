@@ -4,7 +4,10 @@ import it.tukano.blenderfile.elements.BlenderMaterial;
 import it.tukano.blenderfile.elements.BlenderMeshTriangle;
 import it.tukano.blenderfile.elements.BlenderMeshVertex;
 import it.tukano.blenderfile.elements.BlenderTuple2;
+import it.tukano.blenderfile.elements.BlenderTuple3;
+import java.nio.FloatBuffer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,5 +70,39 @@ public class BlenderMeshTriangleImpl implements BlenderMeshTriangle {
     @Override
     public String toString() {
         return String.format("Triangle: %s %s %s", getV1(), getV2(), getV3());
+    }
+
+    public void pushVerticesCoordinates(FloatBuffer coordBuffer) {
+        push(coordBuffer, v1.getPosition(), v2.getPosition(), v3.getPosition());
+    }
+
+    public void pushNormalsCoordinates(FloatBuffer normalBuffer) {
+        push(normalBuffer, v1.getNormal(), v2.getNormal(), v3.getNormal());
+    }
+
+    public void pushTexCoordSetsCoordinates(List<String> texCoordSetNames, FloatBuffer[] uvBuffer) {
+        for (int i = 0; i < uvBuffer.length; i++) {
+            final FloatBuffer buffer = uvBuffer[i];
+            final String layerName = texCoordSetNames.get(i);
+            pushTexCoordSetCoordinates(layerName, buffer);
+        }
+    }
+
+    private void push(FloatBuffer buffer, BlenderTuple3... tuples) {
+        for (int i = 0; i < tuples.length; i++) {
+            BlenderTuple3 tuple = tuples[i];
+            buffer.put(tuple.getX().floatValue()).put(tuple.getY().floatValue()).put(tuple.getZ().floatValue());
+        }
+    }
+
+    private void pushTexCoordSetCoordinates(String layerName, FloatBuffer buffer) {
+        push(buffer, getT1(layerName), getT2(layerName), getT3(layerName));
+    }
+
+    private void push(FloatBuffer buffer, BlenderTuple2... tuples) {
+        for (int i = 0; i < tuples.length; i++) {
+            BlenderTuple2 tuple = tuples[i];
+            buffer.put(tuple.getU().floatValue()).put(tuple.getV().floatValue());
+        }
     }
 }
