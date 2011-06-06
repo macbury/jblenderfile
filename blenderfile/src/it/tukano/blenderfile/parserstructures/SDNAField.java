@@ -185,11 +185,14 @@ public class SDNAField {
             value = pointerValues;
         } else if(isPointer()) {
             Number pointerValue = blenderFileHeader.nextPointer(binaryDataReader);
-            if(pointerValue.longValue() != 0 && file.getBlenderFileSdna().isStructureType(getType())) {
-                BlenderFileBlock pointedBlock = file.getBlockByOldMemAddress(pointerValue);
-                value = file.getBlenderFileSdna().getStructureByName(getType(), pointedBlock.getPositionOfDataBlockInBlenderFile());
+            if(pointerValue.longValue() > 1 && file.getBlenderFileSdna().isStructureType(getType())) {
+                final BlenderFileBlock pointedBlock = file.getBlockByOldMemAddress(pointerValue);
+                final BlenderFileSdna sdna = file.getBlenderFileSdna();
+                final String structureTypeName = getType();
+                final Number blockPosition = pointedBlock.getPositionOfDataBlockInBlenderFile();
+                value = sdna.getStructureByName(structureTypeName, blockPosition);
             } else {
-                value = pointerValue.longValue() == 0 ? null : pointerValue;
+                value = pointerValue.longValue() <= 1 ? null : pointerValue;//todo: weird, 2.57 got 1 as pointer value instead of 0
             }
         } else if(isString()) {//xxx handle char* type
             int len = getSize().intValue();

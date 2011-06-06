@@ -15,12 +15,13 @@ import it.tukano.blenderfile.elements.BlenderTuple2;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        File file = new File("c:\\users\\pgi\\documents\\models\\female.blend");
+        File file = new File("C:\\Users\\pgi\\Documents\\models\\tdg\\Map001.blend");
         FileInputStream fin = null;
         BlenderFile blenderFile = null;
         try {
@@ -30,11 +31,13 @@ public class Test {
         } finally {
             if(fin != null) fin.close();
         }
-//        String html = blenderFile.getBlenderFileSdna().createHtmlDescription();
-//        PrintStream out = new PrintStream("d:\\blenderfilesdna.html");
-//        out.print(html);
-//        out.flush();
-//        out.close();
+        String html = blenderFile.getBlenderFileSdna().createHtmlDescription();
+        if(false) {
+            PrintStream out = new PrintStream("C:\\Users\\pgi\\Documents\\models\\tdg\\sdna.html");
+            out.print(html);
+            out.flush();
+            out.close();
+        }
         List<BlenderScene> scenes = blenderFile.getScenes();
         for (BlenderScene blenderScene : scenes) {
             for (BlenderSceneLayer blenderSceneLayer : blenderScene.getLayers()) {

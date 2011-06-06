@@ -52,6 +52,7 @@ public class BlenderTextureImpl implements BlenderTexture {
         String imageName = null;
         SDNAStructure imageStructure = (SDNAStructure) texStructure.getFieldValue("ima", file);
         if(imageStructure != null) {
+            System.out.println(imageStructure);
             String imageId = (String) ((SDNAStructure) texStructure.getFieldValue("id", file)).getFieldValue("name", file);
             imageName = (String) imageStructure.getFieldValue("name", file);
             image = new BlenderImageImpl().setImageLocation(imageName);
