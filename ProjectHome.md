@@ -1,0 +1,1 @@
+The library translates a .blend file into a set of java structures. The purpose of the library is to allow java programs to import the contents of a .blend file.
